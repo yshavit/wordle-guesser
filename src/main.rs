@@ -1,5 +1,5 @@
+use pancurses::{cbreak, curs_set, endwin, init_pair, initscr, noecho, start_color, Input, Window};
 use std::cmp::min;
-use pancurses::{curs_set, endwin, initscr, Input, Window, noecho, cbreak, start_color, init_pair};
 use strum::{EnumCount, FromRepr};
 
 fn main() {
@@ -21,7 +21,6 @@ fn main() {
         init_pair(e.as_i16(), fg, pancurses::COLOR_BLACK);
     }
 
-
     let mut guesses = GuessStr::new(5);
     guesses.draw(&window);
 
@@ -34,7 +33,7 @@ fn main() {
             Some(Input::KeyLeft) => guesses.move_active(false),
             Some(Input::Character(c)) => guesses.set_ch(c),
             Some(Input::KeyAbort) => break,
-            _ => {},
+            _ => {}
         }
         guesses.draw(&window);
         window.refresh();
@@ -172,7 +171,8 @@ impl GuessStr {
     }
 
     fn set_ch(&mut self, ch: char) {
-        return if ch == '\x7F' { // delete
+        return if ch == '\x7F' {
+            // delete
             if let Some(idx) = self.active {
                 let active = self.guesses.get_mut(idx).expect("out of bounds");
                 if let None = active.ch {
@@ -183,7 +183,7 @@ impl GuessStr {
         } else if ch.is_ascii_alphabetic() {
             self.set_ch_direct(Some(ch.to_ascii_uppercase()));
             self.move_active(true);
-        }
+        };
     }
 
     fn set_ch_direct(&mut self, ch: Option<char>) {
@@ -196,7 +196,19 @@ impl GuessStr {
 
 fn incr_usize(u: usize, max_exclusive: usize, up: bool, wrap: bool) -> usize {
     match u.checked_add_signed(if up { 1 } else { -1 }) {
-        Some(res) => if wrap { res % max_exclusive } else { min(res, max_exclusive - 1)},
-        None => if wrap { max_exclusive - 1 } else { 0 },
+        Some(res) => {
+            if wrap {
+                res % max_exclusive
+            } else {
+                min(res, max_exclusive - 1)
+            }
+        }
+        None => {
+            if wrap {
+                max_exclusive - 1
+            } else {
+                0
+            }
+        }
     }
 }
