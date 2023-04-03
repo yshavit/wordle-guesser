@@ -31,7 +31,11 @@ fn main() {
             Some(Input::KeyDown) => guesses.cycle_guess_knowledge(false),
             Some(Input::KeyRight) => guesses.move_active(true),
             Some(Input::KeyLeft) => guesses.move_active(false),
-            Some(Input::Character(c)) => guesses.set_ch(c),
+            Some(Input::Character(c)) => match c {
+                '\x7F' => guesses.unset_ch(),
+                '\n' => { /* TODO handle newline */ },
+                _ => guesses.set_ch(c)
+            }
             Some(Input::KeyAbort) => break,
             _ => {}
         }
@@ -176,19 +180,18 @@ impl GuessStr {
     }
 
     fn set_ch(&mut self, ch: char) {
-        return if ch == '\x7F' {
-            // delete
-            if let Some(idx) = self.active {
-                let active = self.guesses.get_mut(idx).expect("out of bounds");
-                if let None = active.ch {
-                    self.move_active(false);
-                }
-                self.set_ch_direct(None)
+        self.set_ch_direct(Some(ch.to_ascii_uppercase()));
+        self.move_active(true);
+    }
+
+    fn unset_ch(&mut self) {
+        if let Some(idx) = self.active {
+            let active = self.guesses.get_mut(idx).expect("out of bounds");
+            if let None = active.ch {
+                self.move_active(false);
             }
-        } else if ch.is_ascii_alphabetic() {
-            self.set_ch_direct(Some(ch.to_ascii_uppercase()));
-            self.move_active(true);
-        };
+            self.set_ch_direct(None)
+        }
     }
 
     fn set_ch_direct(&mut self, ch: Option<char>) {
