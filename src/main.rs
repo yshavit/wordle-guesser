@@ -145,7 +145,7 @@ impl GuessStr {
         if let Some(active) = self.active {
             let guess = self.guesses.get_mut(active).expect("out of bounds");
             let curr_knowledge = guess.knowledge;
-            let next_idx = incr_usize(curr_knowledge as usize, GuessKnowledge::COUNT, up, true);
+            let next_idx = incr_usize(curr_knowledge as usize, GuessKnowledge::COUNT, up, WRAP);
             let next = GuessKnowledge::from_repr(next_idx)
                 .expect(&format!("out of range for {}", next_idx));
             guess.set_knowledge(next);
@@ -165,7 +165,7 @@ impl GuessStr {
                 }
             }
             Some(curr) => {
-                self.active = Some(incr_usize(curr, self.guesses.len(), right, false));
+                self.active = Some(incr_usize(curr, self.guesses.len(), right, NO_WRAP));
             }
         }
     }
@@ -195,20 +195,13 @@ impl GuessStr {
 }
 
 fn incr_usize(u: usize, max_exclusive: usize, up: bool, wrap: bool) -> usize {
-    match u.checked_add_signed(if up { 1 } else { -1 }) {
-        Some(res) => {
-            if wrap {
-                res % max_exclusive
-            } else {
-                min(res, max_exclusive - 1)
-            }
-        }
-        None => {
-            if wrap {
-                max_exclusive - 1
-            } else {
-                0
-            }
-        }
+    match (u.checked_add_signed(if up { 1 } else { -1 }), wrap) {
+        (Some(incremented), WRAP) => incremented % max_exclusive,
+        (Some(incremented), NO_WRAP) => min(incremented, max_exclusive - 1),
+        (None, WRAP) =>max_exclusive - 1,
+        (None, NO_WRAP) => 0,
     }
 }
+
+const WRAP: bool = true;
+const NO_WRAP: bool = false;
