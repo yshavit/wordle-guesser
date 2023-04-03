@@ -14,9 +14,9 @@ fn main() {
         let e = GuessKnowledge::from_repr(i).expect("out of bounds");
         let fg = match e {
             GuessKnowledge::Unknown => pancurses::COLOR_WHITE,
-            GuessKnowledge::Missing => pancurses::COLOR_RED,
             GuessKnowledge::WrongPosition => pancurses::COLOR_YELLOW,
             GuessKnowledge::Correct => pancurses::COLOR_GREEN,
+            GuessKnowledge::Missing => pancurses::COLOR_RED,
         };
         init_pair(e.as_i16(), fg, pancurses::COLOR_BLACK);
     }
@@ -62,9 +62,9 @@ const STYLE_INACTIVE: BoxStyle = BoxStyle {
 #[derive(Copy, Clone, EnumCount, FromRepr)]
 enum GuessKnowledge {
     Unknown,
-    Missing,
     WrongPosition,
     Correct,
+    Missing,
 }
 
 impl GuessKnowledge {
