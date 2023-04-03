@@ -99,11 +99,16 @@ impl GuessChar {
     }
 
     fn set_knowledge(&mut self, knowledge: GuessKnowledge) {
-        self.knowledge = knowledge;
+        if let Some(_) = self.ch {
+            self.knowledge = knowledge;
+        }
     }
 
     fn set_ch(&mut self, ch: Option<char>) {
         self.ch = ch;
+        if let None = ch {
+            self.knowledge = GuessKnowledge::Unknown;
+        }
     }
 }
 
