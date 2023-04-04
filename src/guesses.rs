@@ -10,9 +10,9 @@ pub struct BoxStyle<'a> {
 }
 
 const STYLE_ACTIVE: BoxStyle = BoxStyle {
-    top: "┏━┓",
-    vert: '┃',
-    bot: "┗━┛",
+    top: "╔═╗",
+    vert: '║',
+    bot: "╚═╝",
 };
 
 const STYLE_INACTIVE: BoxStyle = BoxStyle {
@@ -132,7 +132,7 @@ impl GuessStr {
                 }
             }
             Some(curr) => {
-                self.active = Some(incr_usize(curr, self.guesses.len(), right, NO_WRAP));
+                self.active = Some(incr_usize(curr, self.guesses.len(), right, WRAP));
             }
         }
     }
