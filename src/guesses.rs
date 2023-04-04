@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-use pancurses::Window;
+use pancurses::{Input, Window};
 use strum::{EnumCount, FromRepr};
 
 pub struct BoxStyle<'a> {
@@ -83,7 +83,7 @@ impl GuessStr {
     pub fn new(size: usize) -> Self {
         let mut result = GuessStr {
             guesses: Vec::with_capacity(size),
-            active: if size > 0 { Some(0) } else { None },
+            active: None,
         };
         for _ in 0..size {
             result.guesses.push(GuessChar {
@@ -160,7 +160,49 @@ impl GuessStr {
     }
 }
 
-pub fn incr_usize(u: usize, max_exclusive: usize, up: bool, wrap: bool) -> usize {
+pub struct GuessGrid {
+    guesses: Vec<GuessStr>,
+    active: usize,
+}
+
+impl GuessGrid {
+    pub fn new() -> GuessGrid {
+        let mut result = GuessGrid {
+            guesses: Vec::with_capacity(6),
+            active: 0,
+        };
+        for _ in 0..6 {
+            result.guesses.push(GuessStr::new(5))
+        }
+        result.guesses[0].active = Some(0);
+        return result
+    }
+
+    pub fn draw(&self, window: &Window) {
+        for (i, guess_str) in self.guesses.iter().enumerate() {
+            window.mv(3 * (i as i32), 3);
+            guess_str.draw(window);
+        }
+        window.mv(3 * (self.active as i32) + 1, 1);
+        window.addstr("➤");
+    }
+
+    pub fn handle_input(&mut self, input: Input) {
+        let guesses = &mut self.guesses[self.active];
+        match input {
+            Input::KeyUp => guesses.cycle_guess_knowledge(true),
+            Input::KeyDown => guesses.cycle_guess_knowledge(false),
+            Input::KeyRight => guesses.move_active(true),
+            Input::KeyLeft => guesses.move_active(false),
+            Input::Character('\n') => { /* TODO handle newline */ }
+            Input::Character('\x7F') => guesses.unset_ch(),
+            Input::Character(c) => guesses.set_ch(c),
+            _ => {}
+        }
+    }
+}
+
+fn incr_usize(u: usize, max_exclusive: usize, up: bool, wrap: bool) -> usize {
     match (u.checked_add_signed(if up { 1 } else { -1 }), wrap) {
         (Some(incremented), WRAP) => incremented % max_exclusive,
         (Some(incremented), NO_WRAP) => min(incremented, max_exclusive - 1),

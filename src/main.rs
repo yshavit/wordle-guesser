@@ -1,6 +1,6 @@
 use pancurses::{cbreak, curs_set, endwin, init_pair, initscr, Input, noecho, start_color};
 use strum::EnumCount;
-use wordlehelper::guesses::{GuessKnowledge, GuessStr};
+use wordlehelper::guesses::{GuessGrid, GuessKnowledge};
 
 fn main() {
     let window = initscr();
@@ -21,25 +21,19 @@ fn main() {
         init_pair(e.as_i16(), fg, pancurses::COLOR_BLACK);
     }
 
-    let mut guesses = GuessStr::new(5);
-    guesses.draw(&window);
+    let mut guess_grid = GuessGrid::new();
+    guess_grid.draw(&window);
+    // let mut guesses = GuessStr::new(5);
+    // guesses.draw(&window);
 
     window.refresh();
     loop {
         match window.getch() {
-            Some(Input::KeyUp) => guesses.cycle_guess_knowledge(true),
-            Some(Input::KeyDown) => guesses.cycle_guess_knowledge(false),
-            Some(Input::KeyRight) => guesses.move_active(true),
-            Some(Input::KeyLeft) => guesses.move_active(false),
-            Some(Input::Character(c)) => match c {
-                '\x7F' => guesses.unset_ch(),
-                '\n' => { /* TODO handle newline */ },
-                _ => guesses.set_ch(c)
-            }
             Some(Input::KeyAbort) => break,
+            Some(input) => guess_grid.handle_input(input),
             _ => {}
         }
-        guesses.draw(&window);
+        guess_grid.draw(&window);
         window.refresh();
     }
     endwin();
