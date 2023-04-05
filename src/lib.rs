@@ -1,3 +1,3 @@
 pub mod guesses_ui;
-pub mod window_helper;
 pub mod knowledge;
+pub mod window_helper;

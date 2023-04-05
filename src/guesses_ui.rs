@@ -1,11 +1,12 @@
 use std::cmp::min;
+use std::slice::Iter;
 use std::thread;
 use std::time::Duration;
 
-use pancurses::{Input, Window};
-use strum::EnumCount;
 use crate::knowledge::CharKnowledge;
 use crate::window_helper::{Color, WindowState};
+use pancurses::{Input, Window};
+use strum::EnumCount;
 
 pub struct BoxStyle<'a> {
     top: &'a str,
@@ -26,8 +27,8 @@ const STYLE_INACTIVE: BoxStyle = BoxStyle {
 };
 
 pub struct GuessChar {
-    knowledge: CharKnowledge,
-    ch: Option<char>,
+    pub knowledge: CharKnowledge,
+    pub ch: Option<char>,
 }
 
 impl GuessChar {
@@ -77,6 +78,10 @@ impl<const N: usize> GuessStr<N> {
             })
         }
         return result;
+    }
+
+    pub fn chars(&self) -> Iter<'_, GuessChar> {
+        return self.guesses.iter();
     }
 
     pub fn draw(&self, window: &Window) {
@@ -160,7 +165,11 @@ impl<const N: usize, const R: usize> GuessGrid<N, R> {
             result.guesses.push(GuessStr::new())
         }
         result.guesses[0].active = Some(0);
-        return result
+        return result;
+    }
+
+    pub fn rows(&self) -> Iter<'_, GuessStr<N>> {
+        return self.guesses.iter();
     }
 
     pub fn draw(&self, window: &Window) {
@@ -187,7 +196,11 @@ impl<const N: usize, const R: usize> GuessGrid<N, R> {
 
     fn handle_newline(&mut self, window: &Window) {
         let active_row = &self.guesses[self.active];
-        if active_row.guesses.iter().any(|c| c.knowledge == CharKnowledge::Unknown) {
+        if active_row
+            .guesses
+            .iter()
+            .any(|c| c.knowledge == CharKnowledge::Unknown)
+        {
             self.report_error(window);
         } else {
             if self.active + 1 >= self.guesses.len() {
@@ -225,7 +238,7 @@ fn incr_usize(u: usize, max_exclusive: usize, up: bool, wrap: bool) -> usize {
     match (u.checked_add_signed(if up { 1 } else { -1 }), wrap) {
         (Some(incremented), WRAP) => incremented % max_exclusive,
         (Some(incremented), NO_WRAP) => min(incremented, max_exclusive - 1),
-        (None, WRAP) =>max_exclusive - 1,
+        (None, WRAP) => max_exclusive - 1,
         (None, NO_WRAP) => 0,
     }
 }

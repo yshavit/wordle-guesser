@@ -29,7 +29,13 @@ impl<'a> WindowState<'a> {
     pub fn new(window: &Window) -> WindowState {
         let (orig_y, orig_x) = window.get_cur_yx();
         let (orig_attrs, orig_color) = window.attrget();
-        return WindowState{ orig_y, orig_x, window, orig_attrs, orig_color }
+        return WindowState {
+            orig_y,
+            orig_x,
+            window,
+            orig_attrs,
+            orig_color,
+        };
     }
 
     pub fn set_color(&self, color: Color) {
