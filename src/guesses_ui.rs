@@ -3,8 +3,8 @@ use std::thread;
 use std::time::Duration;
 
 use pancurses::{Input, Window};
-use strum::{EnumCount, FromRepr};
-use crate::guesses_ui::GuessKnowledge::{Missing, Unknown};
+use strum::EnumCount;
+use crate::knowledge::CharKnowledge;
 use crate::window_helper::{Color, WindowState};
 
 pub struct BoxStyle<'a> {
@@ -25,27 +25,8 @@ const STYLE_INACTIVE: BoxStyle = BoxStyle {
     bot: "╰─╯",
 };
 
-#[derive(Copy, Clone, PartialEq, EnumCount, FromRepr)]
-pub enum GuessKnowledge {
-    Unknown,
-    WrongPosition,
-    Correct,
-    Missing,
-}
-
-impl GuessKnowledge {
-    fn color(&self) -> Color {
-        match self {
-            Unknown => Color::StandardForeground,
-            GuessKnowledge::WrongPosition => Color::Warning,
-            GuessKnowledge::Correct => Color::Good,
-            Missing => Color::Error,
-        }
-    }
-}
-
 pub struct GuessChar {
-    knowledge: GuessKnowledge,
+    knowledge: CharKnowledge,
     ch: Option<char>,
 }
 
@@ -64,7 +45,7 @@ impl GuessChar {
         _ = window.mvprintw(window_state.orig_y + 2, window_state.orig_x, style.bot);
     }
 
-    pub fn set_knowledge(&mut self, knowledge: GuessKnowledge) {
+    pub fn set_knowledge(&mut self, knowledge: CharKnowledge) {
         if let Some(_) = self.ch {
             self.knowledge = knowledge;
         }
@@ -73,7 +54,7 @@ impl GuessChar {
     pub fn set_ch(&mut self, ch: Option<char>) {
         self.ch = ch;
         if let None = ch {
-            self.knowledge = Unknown;
+            self.knowledge = CharKnowledge::Unknown;
         }
     }
 }
@@ -91,7 +72,7 @@ impl GuessStr {
         };
         for _ in 0..size {
             result.guesses.push(GuessChar {
-                knowledge: Unknown,
+                knowledge: CharKnowledge::Unknown,
                 ch: None,
             })
         }
@@ -116,8 +97,8 @@ impl GuessStr {
         if let Some(active) = self.active {
             let guess = self.guesses.get_mut(active).expect("out of bounds");
             let curr_knowledge = guess.knowledge;
-            let next_idx = incr_usize(curr_knowledge as usize, GuessKnowledge::COUNT, up, WRAP);
-            let next = GuessKnowledge::from_repr(next_idx)
+            let next_idx = incr_usize(curr_knowledge as usize, CharKnowledge::COUNT, up, WRAP);
+            let next = CharKnowledge::from_repr(next_idx)
                 .expect(&format!("out of range for {}", next_idx));
             guess.set_knowledge(next);
         }
@@ -206,7 +187,7 @@ impl GuessGrid {
 
     fn handle_newline(&mut self, window: &Window) {
         let active_row = &self.guesses[self.active];
-        if active_row.guesses.iter().any(|c| c.knowledge == Unknown) {
+        if active_row.guesses.iter().any(|c| c.knowledge == CharKnowledge::Unknown) {
             self.report_error(window);
         } else {
             if self.active + 1 >= self.guesses.len() {
