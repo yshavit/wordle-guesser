@@ -46,7 +46,6 @@ impl<'a> WindowState<'a> {
 pub fn init(window: &Window) {
     window.keypad(true);
     curs_set(0);
-    cbreak();
     noecho();
     raw();
     start_color();
