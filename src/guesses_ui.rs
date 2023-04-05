@@ -59,18 +59,18 @@ impl GuessChar {
     }
 }
 
-pub struct GuessStr {
+pub struct GuessStr<const N: usize> {
     guesses: Vec<GuessChar>,
     active: Option<usize>,
 }
 
-impl GuessStr {
-    pub fn new(size: usize) -> Self {
+impl<const N: usize> GuessStr<N> {
+    pub fn new() -> Self {
         let mut result = GuessStr {
-            guesses: Vec::with_capacity(size),
+            guesses: Vec::with_capacity(N),
             active: None,
         };
-        for _ in 0..size {
+        for _ in 0..N {
             result.guesses.push(GuessChar {
                 knowledge: CharKnowledge::Unknown,
                 ch: None,
@@ -145,19 +145,19 @@ impl GuessStr {
     }
 }
 
-pub struct GuessGrid {
-    guesses: Vec<GuessStr>,
+pub struct GuessGrid<const N: usize, const R: usize> {
+    guesses: Vec<GuessStr<N>>,
     active: usize,
 }
 
-impl GuessGrid {
-    pub fn new() -> GuessGrid {
+impl<const N: usize, const R: usize> GuessGrid<N, R> {
+    pub fn new() -> Self {
         let mut result = GuessGrid {
-            guesses: Vec::with_capacity(6),
+            guesses: Vec::with_capacity(R),
             active: 0,
         };
-        for _ in 0..6 {
-            result.guesses.push(GuessStr::new(5))
+        for _ in 0..R {
+            result.guesses.push(GuessStr::new())
         }
         result.guesses[0].active = Some(0);
         return result

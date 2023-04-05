@@ -7,10 +7,8 @@ fn main() {
     let window = initscr();
     window_helper::init(&window);
 
-    let mut guess_grid = GuessGrid::new();
+    let mut guess_grid = GuessGrid::<3, 2>::new();
     guess_grid.draw(&window);
-    // let mut guesses = GuessStr::new(5);
-    // guesses.draw(&window);
 
     window.refresh();
     loop {
