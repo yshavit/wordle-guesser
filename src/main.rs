@@ -1,4 +1,3 @@
-use std::time::Instant;
 use pancurses::{endwin, initscr, Input};
 
 use wordlehelper::guesses_ui::GuessGrid;
@@ -16,7 +15,7 @@ fn main() {
     window.refresh();
     loop {
         match window.getch() {
-            Some(Input::Character(c)) if c == '\t' => break,
+            Some(Input::Character(c)) if c == '\x03' => break, // ctrl-c
             Some(input) => guess_grid.handle_input(&window, input),
             _ => {}
         }
@@ -28,11 +27,7 @@ fn main() {
     // let guess_grid = GuessGrid::generate_dummy_data();
 
     let knowledge = GridKnowledge::from_grid(&guess_grid);
-    println!("one");
-    let read_start = Instant::now();
-    let mut word_list = WordList::<5>::get_embedded(6000);
-    let elapsed = read_start.elapsed();
-    println!("read words in {} ms", elapsed.as_millis());
+    let mut word_list = WordList::<5>::get_embedded(10000);
 
     word_list.filter(&knowledge);
 

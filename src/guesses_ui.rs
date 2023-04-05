@@ -128,6 +128,9 @@ impl<const N: usize> GuessStr<N> {
     }
 
     pub fn set_ch(&mut self, ch: char) {
+        if !ch.is_ascii_alphabetic() {
+            return
+        }
         self.set_ch_direct(Some(ch.to_ascii_uppercase()));
         self.move_active(true);
     }
@@ -213,7 +216,7 @@ impl<const N: usize, const R: usize> GuessGrid<N, R> {
         match input {
             Input::KeyUp => guesses.cycle_guess_knowledge(true),
             Input::KeyDown => guesses.cycle_guess_knowledge(false),
-            Input::KeyRight => guesses.move_active(true),
+            Input::KeyRight | Input::Character('\t') => guesses.move_active(true),
             Input::KeyLeft => guesses.move_active(false),
             Input::Character('\n') => self.handle_newline(window),
             Input::Character('\x7F') => guesses.unset_ch(),

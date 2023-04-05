@@ -1,4 +1,4 @@
-use pancurses::{cbreak, chtype, curs_set, init_pair, noecho, start_color, Window};
+use pancurses::{cbreak, chtype, curs_set, init_pair, noecho, raw, start_color, Window};
 use strum::{EnumCount, FromRepr};
 
 #[derive(Copy, Clone, PartialEq, EnumCount, FromRepr)]
@@ -46,8 +46,9 @@ impl<'a> WindowState<'a> {
 pub fn init(window: &Window) {
     window.keypad(true);
     curs_set(0);
-    noecho();
     cbreak();
+    noecho();
+    raw();
     start_color();
 
     for i in 0..Color::COUNT {
