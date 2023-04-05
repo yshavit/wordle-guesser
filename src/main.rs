@@ -30,5 +30,4 @@ fn main() {
     word_list.filter(&knowledge);
 
     word_list.print(10);
-
 }

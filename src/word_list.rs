@@ -1,4 +1,4 @@
-use crate::knowledge::{GridKnowledge};
+use crate::knowledge::GridKnowledge;
 
 pub struct WordFreq {
     pub word: String,
@@ -20,7 +20,8 @@ impl<const N: usize> WordList<N> {
                 continue;
             };
             if word.len() != N {
-                continue; }
+                continue;
+            }
             let Ok(freq) = freq_str.parse::<u32>() else {
                 continue;
             };
@@ -33,7 +34,8 @@ impl<const N: usize> WordList<N> {
     }
 
     pub fn filter(&mut self, knowledge: &GridKnowledge<N>) {
-        self.words.retain(|word| knowledge.is_word_possible(&word.word))
+        self.words
+            .retain(|word| knowledge.is_word_possible(&word.word))
     }
 
     pub fn print(&self, max: usize) {

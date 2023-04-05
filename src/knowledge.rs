@@ -1,6 +1,6 @@
-use std::cmp::{max, min};
 use crate::guesses_ui::{GuessGrid, GuessStr};
 use crate::window_helper::Color;
+use std::cmp::{max, min};
 use std::collections::{HashMap, HashSet};
 use strum::{EnumCount, FromRepr};
 
@@ -31,18 +31,6 @@ pub struct GridKnowledge<const N: usize> {
 }
 
 impl<const N: usize> GridKnowledge<N> {
-    pub fn known_chars(&self) -> &[Option<char>; N] {
-        &self.fully_known
-    }
-
-    pub fn wrong_positions(&self) -> &Vec<HashSet<char>> {
-        &self.wrong_positions
-    }
-
-    pub fn missing(&self) -> &HashSet<char> {
-        &self.missing
-    }
-
     pub fn is_word_possible(&self, word: &str) -> bool {
         // First, check all the positional info.
         for (idx, word_ch) in word.chars().enumerate() {
@@ -133,7 +121,7 @@ struct LetterCount {
     no_more_than: Option<usize>,
 }
 
-struct LetterCounts(HashMap<char,LetterCount>);
+struct LetterCounts(HashMap<char, LetterCount>);
 
 impl LetterCounts {
     fn new(capacity: usize) -> Self {
