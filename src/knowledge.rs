@@ -1,6 +1,7 @@
+use std::cmp::{max, min};
 use crate::guesses_ui::{GuessGrid, GuessStr};
 use crate::window_helper::Color;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use strum::{EnumCount, FromRepr};
 
 #[derive(Copy, Clone, PartialEq, EnumCount, FromRepr)]
@@ -26,6 +27,55 @@ pub struct GridKnowledge<const N: usize> {
     fully_known: [Option<char>; N],
     wrong_positions: Vec<HashSet<char>>,
     missing: HashSet<char>,
+    letters_count: LetterCounts,
+}
+
+impl<const N: usize> GridKnowledge<N> {
+    pub fn known_chars(&self) -> &[Option<char>; N] {
+        &self.fully_known
+    }
+
+    pub fn wrong_positions(&self) -> &Vec<HashSet<char>> {
+        &self.wrong_positions
+    }
+
+    pub fn missing(&self) -> &HashSet<char> {
+        &self.missing
+    }
+
+    pub fn is_word_possible(&self, word: &str) -> bool {
+        // First, check all the positional info.
+        for (idx, word_ch) in word.chars().enumerate() {
+            // If we know this idx has to contain known_ch, but it doesn't, then return false.
+            if let Some(known_ch) = self.fully_known[idx] {
+                if word_ch != known_ch {
+                    return false;
+                }
+            }
+            // If this idx can't contain a given char, but it does, then return false.
+            if self.wrong_positions[idx].contains(&word_ch) {
+                return false;
+            }
+        }
+        // Now the counts
+        let mut chars_count = HashMap::with_capacity(N);
+        for word_char in word.chars() {
+            *chars_count.entry(word_char).or_insert(0) += 1;
+        }
+        for (ch, count) in chars_count.iter() {
+            if let Some(known_counts) = self.letters_count.get(ch) {
+                if count < &known_counts.at_least {
+                    return false;
+                }
+                if let Some(no_more_than) = known_counts.no_more_than {
+                    if count > &no_more_than {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
 }
 
 impl<const N: usize> GridKnowledge<N> {
@@ -35,11 +85,17 @@ impl<const N: usize> GridKnowledge<N> {
             fully_known: [None; N],
             wrong_positions: Vec::with_capacity(N),
             missing: HashSet::new(),
+            letters_count: LetterCounts::new(N),
         };
         for _ in 0..N {
             result.wrong_positions.push(HashSet::new());
         }
 
+        for row in grid.rows() {
+            result.add_row(row);
+            let row_counts = LetterCounts::from(row);
+            result.letters_count.add(&row_counts);
+        }
         grid.rows().for_each(|r| result.add_row(r));
 
         return result;
@@ -61,5 +117,80 @@ impl<const N: usize> GridKnowledge<N> {
                 CharKnowledge::Unknown => continue,
             };
         }
+    }
+}
+
+/// A description of how many times a letter occurs within a given word. We only need this for
+/// letters that we know exist at least once, so the `at_least` field is a plain usize. On the other
+/// hand, we may not (and often will not) know the maximum of how many times a letter appears, so
+/// `no_more_than` is an optional.
+///
+/// For example, if we guessed `F O O B R`, and got a "wrong position" for the first `O` but a
+/// "missing" for the second `O`, then we know that `LetterCount { at_least: 1, no_more_than: 1 }`.
+#[derive(Default)]
+struct LetterCount {
+    at_least: usize,
+    no_more_than: Option<usize>,
+}
+
+struct LetterCounts(HashMap<char,LetterCount>);
+
+impl LetterCounts {
+    fn new(capacity: usize) -> Self {
+        LetterCounts(HashMap::with_capacity(capacity))
+    }
+
+    fn from<const N: usize>(string: &GuessStr<N>) -> LetterCounts {
+        let mut result = Self::new(N);
+
+        for guess in string.chars() {
+            let Some(ch) = guess.ch else {
+                continue;
+            };
+            match guess.knowledge {
+                CharKnowledge::WrongPosition | CharKnowledge::Correct => {
+                    let count = result.0.entry(ch).or_insert(Default::default());
+                    count.at_least += 1;
+                }
+                CharKnowledge::Missing => {} // will be handled below
+                CharKnowledge::Unknown => {}
+            }
+        }
+        for guess in string.chars() {
+            let Some(ch) = guess.ch else {
+                continue;
+            };
+            if guess.knowledge == CharKnowledge::Missing {
+                let count = result.0.entry(ch).or_insert(Default::default());
+                count.no_more_than = Some(count.at_least);
+            }
+        }
+        return result;
+    }
+
+    fn add(&mut self, other: &LetterCounts) {
+        for (ch, other_count) in &other.0 {
+            let Some(my_count) = self.0.get_mut(ch) else {
+                continue;
+            };
+            let at_least = max(my_count.at_least, other_count.at_least);
+            let no_more_than = match (my_count.no_more_than, other_count.no_more_than) {
+                (Some(my_ceil), Some(other_ceil)) => Some(min(my_ceil, other_ceil)),
+                (ceil @ Some(_), None) => ceil,
+                (None, ceil @ Some(_)) => ceil,
+                (None, None) => None,
+            };
+            if let Some(ceil) = no_more_than {
+                if at_least > ceil {
+                    panic!("{} > {}", at_least, ceil)
+                }
+            }
+            my_count.at_least = at_least;
+            my_count.no_more_than = no_more_than;
+        }
+    }
+
+    fn get(&self, ch: &char) -> Option<&LetterCount> {
+        self.0.get(&ch)
     }
 }

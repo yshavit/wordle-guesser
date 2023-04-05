@@ -1,7 +1,9 @@
 use pancurses::{endwin, initscr, Input};
 
 use wordlehelper::guesses_ui::GuessGrid;
+use wordlehelper::knowledge::GridKnowledge;
 use wordlehelper::window_helper;
+use wordlehelper::word_list::WordList;
 
 fn main() {
     let window = initscr();
@@ -13,7 +15,7 @@ fn main() {
     window.refresh();
     loop {
         match window.getch() {
-            Some(Input::KeyAbort) => break,
+            Some(Input::Character(c)) if c == '\t' => break,
             Some(input) => guess_grid.handle_input(&window, input),
             _ => {}
         }
@@ -21,4 +23,12 @@ fn main() {
         window.refresh();
     }
     endwin();
+
+    let knowledge = GridKnowledge::from_grid(&guess_grid);
+    let mut word_list = WordList::<3>::get_embedded();
+
+    word_list.filter(&knowledge);
+
+    word_list.print(10);
+
 }
