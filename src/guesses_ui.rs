@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use pancurses::{Input, Window};
 use strum::{EnumCount, FromRepr};
-use crate::guesses::GuessKnowledge::{Missing, Unknown};
+use crate::guesses_ui::GuessKnowledge::{Missing, Unknown};
 use crate::window_helper::{Color, WindowState};
 
 pub struct BoxStyle<'a> {

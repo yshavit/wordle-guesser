@@ -1,6 +1,6 @@
 use pancurses::{endwin, initscr, Input};
 
-use wordlehelper::guesses::GuessGrid;
+use wordlehelper::guesses_ui::GuessGrid;
 use wordlehelper::window_helper;
 
 fn main() {
