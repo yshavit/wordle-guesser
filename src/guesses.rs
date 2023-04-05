@@ -1,7 +1,11 @@
 use std::cmp::min;
+use std::thread;
+use std::time::Duration;
 
-use pancurses::{Input, Window};
+use pancurses::{chtype, Input, Window};
 use strum::{EnumCount, FromRepr};
+use crate::guesses::GuessKnowledge::{Missing, Unknown};
+use crate::window_helper::Color;
 
 pub struct BoxStyle<'a> {
     top: &'a str,
@@ -21,7 +25,7 @@ const STYLE_INACTIVE: BoxStyle = BoxStyle {
     bot: "╰─╯",
 };
 
-#[derive(Copy, Clone, EnumCount, FromRepr)]
+#[derive(Copy, Clone, PartialEq, EnumCount, FromRepr)]
 pub enum GuessKnowledge {
     Unknown,
     WrongPosition,
@@ -30,8 +34,13 @@ pub enum GuessKnowledge {
 }
 
 impl GuessKnowledge {
-    pub fn as_i16(&self) -> i16 {
-        (*self as usize) as i16
+    fn color(&self) -> Color {
+        match self {
+            Unknown => Color::StandardForeground,
+            GuessKnowledge::WrongPosition => Color::Warning,
+            GuessKnowledge::Correct => Color::Good,
+            Missing => Color::Error,
+        }
     }
 }
 
@@ -40,24 +49,43 @@ pub struct GuessChar {
     ch: Option<char>,
 }
 
+struct WindowState<'a> {
+    window: &'a Window,
+    orig_y: i32,
+    orig_x: i32,
+    orig_attrs: chtype,
+    orig_color: i16,
+}
+
+impl<'a> Drop for WindowState<'a> {
+    fn drop(&mut self) {
+        self.window.attrset(self.orig_attrs);
+        self.window.color_set(self.orig_color);
+    }
+}
+
+impl<'a> WindowState<'a> {
+    pub fn new(window: &Window) -> WindowState {
+        let (orig_y, orig_x) = window.get_cur_yx();
+        let (orig_attrs, orig_color) = window.attrget();
+        return WindowState{ orig_y, orig_x, window, orig_attrs, orig_color }
+    }
+
+}
+
 impl GuessChar {
     pub fn draw(&self, window: &Window, style: &BoxStyle) {
-        let (orig_y, orig_x) = window.get_cur_yx();
-        let ch = self.ch.unwrap_or(' ');
+        let guessed_char = self.ch.unwrap_or(' ');
+        let orig_state = WindowState::new(window);
 
-        let (orig_attrs, orig_color) = window.attrget();
-        window.color_set(self.knowledge.as_i16());
-
+        self.knowledge.color().set(window);
         _ = window.printw(style.top);
         _ = window.mvprintw(
-            orig_y + 1,
-            orig_x,
-            format!("{}{}{}", style.vert, ch, style.vert),
+            orig_state.orig_y + 1,
+            orig_state.orig_x,
+            format!("{}{}{}", style.vert, guessed_char, style.vert),
         );
-        _ = window.mvprintw(orig_y + 2, orig_x, style.bot);
-
-        window.attrset(orig_attrs);
-        window.color_set(orig_color);
+        _ = window.mvprintw(orig_state.orig_y + 2, orig_state.orig_x, style.bot);
     }
 
     pub fn set_knowledge(&mut self, knowledge: GuessKnowledge) {
@@ -69,7 +97,7 @@ impl GuessChar {
     pub fn set_ch(&mut self, ch: Option<char>) {
         self.ch = ch;
         if let None = ch {
-            self.knowledge = GuessKnowledge::Unknown;
+            self.knowledge = Unknown;
         }
     }
 }
@@ -87,7 +115,7 @@ impl GuessStr {
         };
         for _ in 0..size {
             result.guesses.push(GuessChar {
-                knowledge: GuessKnowledge::Unknown,
+                knowledge: Unknown,
                 ch: None,
             })
         }
@@ -183,21 +211,54 @@ impl GuessGrid {
             window.mv(3 * (i as i32), 3);
             guess_str.draw(window);
         }
-        window.mv(3 * (self.active as i32) + 1, 1);
-        window.addstr("➤");
+        self.draw_active_marker(window)
     }
 
-    pub fn handle_input(&mut self, input: Input) {
+    pub fn handle_input(&mut self, window: &Window, input: Input) {
         let guesses = &mut self.guesses[self.active];
         match input {
             Input::KeyUp => guesses.cycle_guess_knowledge(true),
             Input::KeyDown => guesses.cycle_guess_knowledge(false),
             Input::KeyRight => guesses.move_active(true),
             Input::KeyLeft => guesses.move_active(false),
-            Input::Character('\n') => { /* TODO handle newline */ }
+            Input::Character('\n') => self.handle_newline(window),
             Input::Character('\x7F') => guesses.unset_ch(),
             Input::Character(c) => guesses.set_ch(c),
             _ => {}
+        }
+    }
+
+    fn handle_newline(&mut self, window: &Window) {
+        let active_row = &self.guesses[self.active];
+        if active_row.guesses.iter().any(|c| c.knowledge == Unknown) {
+            self.report_error(window);
+        } else {
+            if self.active + 1 >= self.guesses.len() {
+                self.report_error(window);
+            } else {
+                Color::Hidden.set(window);
+                self.guesses[self.active].active = None;
+                self.draw_active_marker(window);
+                Color::StandardForeground.set(window);
+                self.active += 1;
+                self.draw_active_marker(window);
+                self.guesses[self.active].active = Some(0);
+            }
+        }
+    }
+
+    fn draw_active_marker(&self, window: &Window) {
+        window.mv(3 * (self.active as i32) + 1, 1);
+        window.addstr("➤");
+    }
+
+    fn report_error(&self, window: &Window) {
+        let _restore = WindowState::new(window);
+        for color in [Color::Error, Color::StandardForeground].repeat(2) {
+            color.set(window);
+            self.draw_active_marker(window);
+            window.refresh();
+            thread::sleep(Duration::from_millis(80));
         }
     }
 }

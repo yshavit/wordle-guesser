@@ -1,25 +1,11 @@
-use pancurses::{cbreak, curs_set, endwin, init_pair, initscr, Input, noecho, start_color};
-use strum::EnumCount;
-use wordlehelper::guesses::{GuessGrid, GuessKnowledge};
+use pancurses::{endwin, initscr, Input};
+
+use wordlehelper::guesses::GuessGrid;
+use wordlehelper::window_helper;
 
 fn main() {
     let window = initscr();
-    window.keypad(true);
-    curs_set(0);
-    noecho();
-    cbreak();
-    start_color();
-
-    for i in 0..GuessKnowledge::COUNT {
-        let e = GuessKnowledge::from_repr(i).expect("out of bounds");
-        let fg = match e {
-            GuessKnowledge::Unknown => pancurses::COLOR_WHITE,
-            GuessKnowledge::WrongPosition => pancurses::COLOR_YELLOW,
-            GuessKnowledge::Correct => pancurses::COLOR_GREEN,
-            GuessKnowledge::Missing => pancurses::COLOR_RED,
-        };
-        init_pair(e.as_i16(), fg, pancurses::COLOR_BLACK);
-    }
+    window_helper::init(&window);
 
     let mut guess_grid = GuessGrid::new();
     guess_grid.draw(&window);
@@ -30,7 +16,7 @@ fn main() {
     loop {
         match window.getch() {
             Some(Input::KeyAbort) => break,
-            Some(input) => guess_grid.handle_input(input),
+            Some(input) => guess_grid.handle_input(&window, input),
             _ => {}
         }
         guess_grid.draw(&window);
