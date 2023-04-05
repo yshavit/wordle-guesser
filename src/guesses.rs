@@ -2,10 +2,10 @@ use std::cmp::min;
 use std::thread;
 use std::time::Duration;
 
-use pancurses::{chtype, Input, Window};
+use pancurses::{Input, Window};
 use strum::{EnumCount, FromRepr};
 use crate::guesses::GuessKnowledge::{Missing, Unknown};
-use crate::window_helper::Color;
+use crate::window_helper::{Color, WindowState};
 
 pub struct BoxStyle<'a> {
     top: &'a str,
@@ -49,43 +49,19 @@ pub struct GuessChar {
     ch: Option<char>,
 }
 
-struct WindowState<'a> {
-    window: &'a Window,
-    orig_y: i32,
-    orig_x: i32,
-    orig_attrs: chtype,
-    orig_color: i16,
-}
-
-impl<'a> Drop for WindowState<'a> {
-    fn drop(&mut self) {
-        self.window.attrset(self.orig_attrs);
-        self.window.color_set(self.orig_color);
-    }
-}
-
-impl<'a> WindowState<'a> {
-    pub fn new(window: &Window) -> WindowState {
-        let (orig_y, orig_x) = window.get_cur_yx();
-        let (orig_attrs, orig_color) = window.attrget();
-        return WindowState{ orig_y, orig_x, window, orig_attrs, orig_color }
-    }
-
-}
-
 impl GuessChar {
     pub fn draw(&self, window: &Window, style: &BoxStyle) {
         let guessed_char = self.ch.unwrap_or(' ');
-        let orig_state = WindowState::new(window);
+        let window_state = WindowState::new(window);
 
-        self.knowledge.color().set(window);
+        window_state.set_color(self.knowledge.color());
         _ = window.printw(style.top);
         _ = window.mvprintw(
-            orig_state.orig_y + 1,
-            orig_state.orig_x,
+            window_state.orig_y + 1,
+            window_state.orig_x,
             format!("{}{}{}", style.vert, guessed_char, style.vert),
         );
-        _ = window.mvprintw(orig_state.orig_y + 2, orig_state.orig_x, style.bot);
+        _ = window.mvprintw(window_state.orig_y + 2, window_state.orig_x, style.bot);
     }
 
     pub fn set_knowledge(&mut self, knowledge: GuessKnowledge) {
@@ -236,10 +212,11 @@ impl GuessGrid {
             if self.active + 1 >= self.guesses.len() {
                 self.report_error(window);
             } else {
-                Color::Hidden.set(window);
+                let window_state = WindowState::new(window);
+                window_state.set_color(Color::Hidden);
                 self.guesses[self.active].active = None;
                 self.draw_active_marker(window);
-                Color::StandardForeground.set(window);
+                window_state.set_color(Color::StandardForeground);
                 self.active += 1;
                 self.draw_active_marker(window);
                 self.guesses[self.active].active = Some(0);
@@ -253,9 +230,9 @@ impl GuessGrid {
     }
 
     fn report_error(&self, window: &Window) {
-        let _restore = WindowState::new(window);
+        let window_state = WindowState::new(window);
         for color in [Color::Error, Color::StandardForeground].repeat(2) {
-            color.set(window);
+            window_state.set_color(color);
             self.draw_active_marker(window);
             window.refresh();
             thread::sleep(Duration::from_millis(80));
