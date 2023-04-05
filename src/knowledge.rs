@@ -50,15 +50,14 @@ impl<const N: usize> GridKnowledge<N> {
         for word_char in word.chars() {
             *chars_count.entry(word_char).or_insert(0) += 1;
         }
-        for (ch, count) in chars_count.iter() {
-            if let Some(known_counts) = self.letters_count.get(ch) {
-                if count < &known_counts.at_least {
+        for (known_ch, known_count) in self.letters_count.0.iter() {
+            let count_in_word = chars_count.get(known_ch).unwrap_or(&0);
+            if count_in_word < &known_count.at_least {
+                return false
+            }
+            if let Some(no_more_than) = known_count.no_more_than {
+                if count_in_word > &no_more_than {
                     return false;
-                }
-                if let Some(no_more_than) = known_counts.no_more_than {
-                    if count > &no_more_than {
-                        return false;
-                    }
                 }
             }
         }
@@ -132,11 +131,12 @@ impl LetterCounts {
         let mut result = Self::new(N);
 
         for guess in string.chars() {
-            let Some(ch) = guess.ch else {
+            let Some(mut ch) = guess.ch else {
                 continue;
             };
             match guess.knowledge {
                 CharKnowledge::WrongPosition | CharKnowledge::Correct => {
+                    ch = ch.to_ascii_uppercase();
                     let count = result.0.entry(ch).or_insert(Default::default());
                     count.at_least += 1;
                 }
@@ -145,10 +145,11 @@ impl LetterCounts {
             }
         }
         for guess in string.chars() {
-            let Some(ch) = guess.ch else {
+            let Some(mut ch) = guess.ch else {
                 continue;
             };
             if guess.knowledge == CharKnowledge::Missing {
+                ch = ch.to_ascii_uppercase();
                 let count = result.0.entry(ch).or_insert(Default::default());
                 count.no_more_than = Some(count.at_least);
             }
@@ -158,9 +159,8 @@ impl LetterCounts {
 
     fn add(&mut self, other: &LetterCounts) {
         for (ch, other_count) in &other.0 {
-            let Some(my_count) = self.0.get_mut(ch) else {
-                continue;
-            };
+            let entry = self.0.entry(*ch);
+            let my_count = entry.or_insert_with(|| LetterCount::default());
             let at_least = max(my_count.at_least, other_count.at_least);
             let no_more_than = match (my_count.no_more_than, other_count.no_more_than) {
                 (Some(my_ceil), Some(other_ceil)) => Some(min(my_ceil, other_ceil)),
@@ -176,9 +176,5 @@ impl LetterCounts {
             my_count.at_least = at_least;
             my_count.no_more_than = no_more_than;
         }
-    }
-
-    fn get(&self, ch: &char) -> Option<&LetterCount> {
-        self.0.get(&ch)
     }
 }

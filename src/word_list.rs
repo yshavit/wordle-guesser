@@ -10,13 +10,13 @@ pub struct WordList<const N: usize> {
 }
 
 impl<const N: usize> WordList<N> {
-    pub fn get_embedded() -> Self {
-        let file = include_str!("enwiki-2022-08-29-10K.txt");
+    pub fn get_embedded(limit: usize) -> Self {
+        let file = include_str!("words-5chars.txt");
         let mut result = WordList {
             words: Vec::with_capacity(file.chars().filter(|c| c == &'\n').count()),
         };
         for line in file.split("\n") {
-            let Some((word, freq_str)) = line.split_once(" ") else {
+            let Some((word, freq_str)) = line.split_once("\t") else {
                 continue;
             };
             if word.len() != N {
@@ -26,9 +26,12 @@ impl<const N: usize> WordList<N> {
                 continue;
             };
             result.words.push(WordFreq {
-                word: word.to_string(),
+                word: word.to_ascii_uppercase(),
                 freq,
-            })
+            });
+            if result.words.len() >= limit {
+                break;
+            }
         }
         return result;
     }
@@ -38,8 +41,8 @@ impl<const N: usize> WordList<N> {
             .retain(|word| knowledge.is_word_possible(&word.word))
     }
 
-    pub fn print(&self, max: usize) {
-        for word in self.words.iter().take(max) {
+    pub fn print(&self) {
+        for word in self.words.iter() {
             println!("{}\t({})", word.word, word.freq)
         }
     }
