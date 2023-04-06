@@ -19,7 +19,13 @@ fn main() {
         let knowledge = GridKnowledge::from_grid(&guess_grid);
         let mut possible_words = WordList::<5>::get_embedded(10000);
         possible_words.filter(&knowledge);
-        words_window.set_texts(possible_words.words().iter().map(|wf| wf.word.to_string()).collect());
+        words_window.set_texts(
+            possible_words
+                .words()
+                .iter()
+                .map(|wf| wf.word.to_string())
+                .collect(),
+        );
 
         window.touch();
         guess_grid.draw(&window);

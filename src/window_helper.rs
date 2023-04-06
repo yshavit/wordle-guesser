@@ -1,6 +1,6 @@
-use std::cmp::{max, min};
-use std::ops::Range;
-use pancurses::{chtype, curs_set, init_pair, initscr, noecho, raw, start_color, Window};
+use pancurses::{chtype, curs_set, init_pair, noecho, raw, start_color, Window};
+use std::cmp::{min};
+
 use strum::{EnumCount, FromRepr};
 
 #[derive(Copy, Clone, PartialEq, EnumCount, FromRepr)]
@@ -77,9 +77,11 @@ impl TextScroll {
         let lines_trunc = min(lines, owner_max_y - pos_y);
         let cols_trunc = min(cols, owner_max_x - pos_x);
         TextScroll {
-            window: owner.subwin(lines_trunc, cols_trunc, pos_y, pos_x).expect("couldn't create subwindow"),
+            window: owner
+                .subwin(lines_trunc, cols_trunc, pos_y, pos_x)
+                .expect("couldn't create subwindow"),
             texts: Vec::new(),
-            first_visible_idx: 0
+            first_visible_idx: 0,
         }
     }
 
@@ -104,7 +106,7 @@ impl TextScroll {
     fn redraw(&self) {
         let (max_y, max_x) = self.window.get_max_yx();
         if max_y < 2 || max_x < 4 {
-            return
+            return;
         }
         // We're going for something like this:
         // ┌──────┬─┐
@@ -144,7 +146,7 @@ impl TextScroll {
             0
         } else {
             // "height as float, height as int"
-            let height_f = num_rows_f64  / (self.texts.len() as f64) * num_rows_f64;
+            let height_f = num_rows_f64 / (self.texts.len() as f64) * num_rows_f64;
             let height_i = height_f.round() as usize;
             if height_i >= num_rows {
                 height_i - 2
@@ -178,24 +180,27 @@ impl TextScroll {
         let scroller_block = if height == 0 {
             None
         } else {
-            Some(pos_y..(pos_y+height))
+            Some(pos_y..(pos_y + height))
         };
 
         // text rows
         let empty_str = &("".to_string());
-        for pos_y in 1..max_y-1 {
+        for pos_y in 1..max_y - 1 {
             let pos_within_main = (pos_y - 1) as usize; // header row doesn't count
-            let print_scroller = scroller_block.as_ref()
+            let print_scroller = scroller_block
+                .as_ref()
                 .map(|r| r.contains(&pos_within_main))
                 .unwrap_or(false);
-            let scroller = if print_scroller { '█'} else {' '};
-            let text = self.texts.get(self.first_visible_idx + pos_within_main)
+            let scroller = if print_scroller { '█' } else { ' ' };
+            let text = self
+                .texts
+                .get(self.first_visible_idx + pos_within_main)
                 .unwrap_or(empty_str);
             let write = format!("│{:<main_pane_width_usize$}│{}│", text, scroller);
             self.window.mvaddstr(pos_y, 0, write);
         }
         // footer
-        self.window.mvaddstr(max_y-1, 0, "└");
+        self.window.mvaddstr(max_y - 1, 0, "└");
         self.window.printw(&main_pane_h_bar);
         self.window.printw("┴─┘");
     }

@@ -129,7 +129,7 @@ impl<const N: usize> GuessStr<N> {
 
     pub fn set_ch(&mut self, ch: char) {
         if !ch.is_ascii_alphabetic() {
-            return
+            return;
         }
         self.set_ch_direct(Some(ch.to_ascii_uppercase()));
         self.move_active(true);

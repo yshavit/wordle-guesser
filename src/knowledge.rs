@@ -53,7 +53,7 @@ impl<const N: usize> GridKnowledge<N> {
         for (known_ch, known_count) in self.letters_count.0.iter() {
             let count_in_word = chars_count.get(known_ch).unwrap_or(&0);
             if count_in_word < &known_count.at_least {
-                return false
+                return false;
             }
             if let Some(no_more_than) = known_count.no_more_than {
                 if count_in_word > &no_more_than {
