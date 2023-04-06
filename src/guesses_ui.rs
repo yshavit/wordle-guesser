@@ -158,34 +158,6 @@ pub struct GuessGrid<const N: usize, const R: usize> {
     active: usize,
 }
 
-impl GuessGrid<5, 1> {
-    pub fn generate_dummy_data() -> Self {
-        let mut result = GuessGrid::new();
-        let row_0 = &mut result.guesses[0];
-        row_0.guesses[0] = GuessChar {
-            knowledge: CharKnowledge::Correct,
-            ch: Some('S'),
-        };
-        row_0.guesses[1] = GuessChar {
-            knowledge: CharKnowledge::Missing,
-            ch: Some('L'),
-        };
-        row_0.guesses[2] = GuessChar {
-            knowledge: CharKnowledge::Correct,
-            ch: Some('A'),
-        };
-        row_0.guesses[3] = GuessChar {
-            knowledge: CharKnowledge::Missing,
-            ch: Some('T'),
-        };
-        row_0.guesses[4] = GuessChar {
-            knowledge: CharKnowledge::Missing,
-            ch: Some('E'),
-        };
-        return result;
-    }
-}
-
 impl<const N: usize, const R: usize> GuessGrid<N, R> {
     pub fn new() -> Self {
         let mut result = GuessGrid {

@@ -41,6 +41,10 @@ impl<const N: usize> WordList<N> {
             .retain(|word| knowledge.is_word_possible(&word.word))
     }
 
+    pub fn words(&self) -> &Vec<WordFreq> {
+        &self.words
+    }
+
     pub fn print(&self) {
         for word in self.words.iter() {
             println!("{}\t({})", word.word, word.freq)
