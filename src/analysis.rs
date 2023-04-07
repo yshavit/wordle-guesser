@@ -68,6 +68,7 @@ impl<'a, const N: usize> CharCounts<'a, N> {
             for ch in uniq_chars(word) {
                 score += all_char_scores.get(&ch).unwrap_or(&0.0)
             }
+            score *= word_freq.freq as f64;
             result.push((&word as &str, score))
         }
         result.sort_by(|a, b| b.1.total_cmp(&a.1));
