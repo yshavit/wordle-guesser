@@ -1,5 +1,5 @@
 use pancurses::{chtype, curs_set, init_pair, noecho, raw, start_color, Window};
-use std::cmp::{min};
+use std::cmp::min;
 
 use strum::{EnumCount, FromRepr};
 
@@ -87,6 +87,7 @@ impl TextScroll {
 
     pub fn set_texts(&mut self, texts: Vec<String>) {
         self.texts = texts;
+        self.first_visible_idx = 0;
         self.redraw();
     }
 
@@ -126,22 +127,9 @@ impl TextScroll {
         self.window.printw(&main_pane_h_bar);
         self.window.printw("┬─┐");
 
-        // scroller block has a few simple rules:
-        // 1. First we get its height:
-        //    a. If we have at least as many rows as texts, the height is 0.
-        //    b. Else, it's (num_rows / num_texts * num_rows).
-        //    c. Then we round it, and if that's == num_rows, we subtract 2 (so that it never looks
-        //       full if we don't see all the elements).
-        // 2. Then, we get its position:
-        //    a. Initially it's just (first_visible_idx / number_of_texts), rounded.
-        //    b. If the first element isn't visible, then the position is at least 1.
-        //    c. If the last element isn't visible, then the position is such that there's at least
-        //       one empty row at the bottom.
-        //
-
+        // Scroll bar
         let num_rows = (max_y - 2) as usize; // -2 for header and footer
         let num_rows_f64 = num_rows as f64;
-
         let height = if num_rows >= self.texts.len() {
             0
         } else {
@@ -149,38 +137,33 @@ impl TextScroll {
             let height_f = num_rows_f64 / (self.texts.len() as f64) * num_rows_f64;
             let height_i = height_f.round() as usize;
             if height_i >= num_rows {
-                height_i - 2
+                height_i - 2 // -2 so that we always have room for the first and last
             } else if height_i == 0 {
                 1
             } else {
                 height_i
             }
         };
-        let pos_y = {
-            0 as usize
-            // // "position y as float, position y as int"
-            // let pos_y_wiggle = num_rows_f64 - (height as f64);
-            // let pos_y_ratio = (self.first_visible_idx as f64) / ((self.texts.len() - num_rows) as f64);
-            // let pos_y_f = pos_y_ratio * pos_y_wiggle;
-            // let pos_y_i = pos_y_f.round() as usize;
-            // if pos_y_i == 0 && self.first_visible_idx > 0 {
-            //     1
-            // } else {
-            //     let last_visible_idx = self.first_visible_idx + num_rows - 1;
-            //     let last_text_not_visible = last_visible_idx < (self.texts.len() - 1);
-            //     let scroll_hit_bottom = pos_y_i + height >= num_rows - 1;
-            //     if last_text_not_visible && scroll_hit_bottom {
-            //         pos_y_i - 1
-            //     } else {
-            //         pos_y_i
-            //     }
-            // }
-        };
-
         let scroller_block = if height == 0 {
             None
         } else {
-            Some(pos_y..(pos_y + height))
+            let num_texts_not_visible = (self.texts.len() - num_rows) as f64;
+            // how much "wiggle room" the scroll bar has; that is, how many blocks are not scroller
+            let num_scroll_bar_wiggle = num_rows - height;
+            let pos_y_ratio = (self.first_visible_idx as f64) / num_texts_not_visible;
+            let mut pos_y = (pos_y_ratio * (num_scroll_bar_wiggle as f64)).round() as usize;
+            // now, adjust
+            if pos_y == 0 && self.first_visible_idx > 0 {
+                pos_y = 1;
+            } else {
+                let last_visible_idx = self.first_visible_idx + num_rows;
+                let have_more_texts = last_visible_idx < self.texts.len() - 1;
+                let scroller_at_bottom = pos_y == num_scroll_bar_wiggle;
+                if have_more_texts && scroller_at_bottom {
+                    pos_y -= 1;
+                }
+            }
+            Some(pos_y..(pos_y + height + 1)) // +1 because exclusive
         };
 
         // text rows
