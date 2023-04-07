@@ -31,6 +31,13 @@ pub struct GuessChar {
     pub ch: Option<char>,
 }
 
+#[derive(PartialEq)]
+pub enum UserAction {
+    SubmittedRow,
+    ChangedKnowledge,
+    Other,
+}
+
 impl GuessChar {
     pub fn draw(&self, window: &Window, style: &BoxStyle) {
         let guessed_char = self.ch.unwrap_or(' ');
@@ -183,18 +190,22 @@ impl<const N: usize, const R: usize> GuessGrid<N, R> {
         self.draw_active_marker(window)
     }
 
-    pub fn handle_input(&mut self, window: &Window, input: Input) {
+    pub fn handle_input(&mut self, window: &Window, input: Input) -> UserAction {
         let guesses = &mut self.guesses[self.active];
         match input {
             Input::KeyUp => guesses.cycle_guess_knowledge(true),
             Input::KeyDown => guesses.cycle_guess_knowledge(false),
             Input::KeyRight | Input::Character('\t') => guesses.move_active(true),
             Input::KeyLeft => guesses.move_active(false),
-            Input::Character('\n') => self.handle_newline(window),
             Input::Character('\x7F') => guesses.unset_ch(),
+            Input::Character('\n') => {
+                self.handle_newline(window);
+                return UserAction::SubmittedRow;
+            }
             Input::Character(c) => guesses.set_ch(c),
             _ => {}
         }
+        UserAction::ChangedKnowledge
     }
 
     fn handle_newline(&mut self, window: &Window) {
