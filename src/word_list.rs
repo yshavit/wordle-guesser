@@ -1,4 +1,4 @@
-use crate::known_word_constraints::KnownWordConstraints;
+use crate::guess::known_word_constraints::KnownWordConstraints;
 
 pub struct WordFreq {
     pub word: String,

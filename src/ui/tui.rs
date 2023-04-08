@@ -1,12 +1,12 @@
-use crate::guesses::{GuessChar, GuessGrid, GuessStr};
-use crate::known_word_constraints::CharKnowledge;
-use crate::text_scroll_pane::TextScroll;
-use crate::window_helper::{init, Color, WindowState};
+use crate::guess::guesses::{GuessChar, GuessGrid, GuessStr};
+use crate::guess::known_word_constraints::CharKnowledge;
 use pancurses::{endwin, Input, Window};
 use std::cmp::min;
 use std::thread;
 use std::time::Duration;
 use strum::EnumCount;
+use crate::ui::text_scroll_pane::TextScroll;
+use crate::ui::window_helper::{Color, init, WindowState};
 
 #[derive(PartialEq)]
 pub enum UserAction {

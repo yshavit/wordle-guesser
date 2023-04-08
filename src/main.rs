@@ -1,10 +1,10 @@
 use pancurses::Input;
-use wordlehelper::analysis::CharCounts;
+use wordlehelper::analyze::analysis::CharCounts;
 
-use wordlehelper::guesses::GuessGrid;
-use wordlehelper::known_word_constraints::KnownWordConstraints;
-use wordlehelper::tui::{MainWindow, UserAction};
-use wordlehelper::window_helper;
+use wordlehelper::guess::guesses::GuessGrid;
+use wordlehelper::guess::known_word_constraints::KnownWordConstraints;
+use wordlehelper::ui::tui::{MainWindow, UserAction};
+use wordlehelper::ui::window_helper;
 use wordlehelper::word_list::WordList;
 
 fn main() {
