@@ -1,6 +1,7 @@
 use crate::guesses::{GuessChar, GuessGrid, GuessStr};
 use crate::known_word_constraints::CharKnowledge;
-use crate::window_helper::{init, Color, TextScroll, WindowState};
+use crate::text_scroll_pane::TextScroll;
+use crate::window_helper::{init, Color, WindowState};
 use pancurses::{endwin, Input, Window};
 use std::cmp::min;
 use std::thread;
@@ -147,7 +148,6 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
     fn draw_guess_box(&self, guess_ch: &GuessChar, style: &BoxStyle) {
         let guessed_char = guess_ch.ch().unwrap_or(' ');
         let window_state = WindowState::new(&self.window);
-
 
         window_state.set_color(color_for_knowledge(guess_ch.knowledge()));
         _ = self.window.printw(style.top);
