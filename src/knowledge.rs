@@ -1,4 +1,4 @@
-use crate::guesses_ui::{GuessGrid, GuessStr};
+use crate::guesses::{GuessGrid, GuessStr};
 use crate::window_helper::Color;
 use std::cmp::{max, min};
 use std::collections::{HashMap, HashSet};

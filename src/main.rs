@@ -1,7 +1,7 @@
 use pancurses::{endwin, initscr, Input};
 use wordlehelper::analysis::CharCounts;
 
-use wordlehelper::guesses_ui::{GuessGrid, UserAction};
+use wordlehelper::guesses::{GuessGrid, UserAction};
 use wordlehelper::knowledge::GridKnowledge;
 use wordlehelper::window_helper;
 use wordlehelper::window_helper::TextScroll;
