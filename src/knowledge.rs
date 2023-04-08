@@ -1,5 +1,4 @@
 use crate::guesses::{GuessGrid, GuessStr};
-use crate::window_helper::Color;
 use std::cmp::{max, min};
 use std::collections::{HashMap, HashSet};
 use strum::{EnumCount, FromRepr};
@@ -10,17 +9,6 @@ pub enum CharKnowledge {
     WrongPosition,
     Correct,
     Missing,
-}
-
-impl CharKnowledge {
-    pub fn color(&self) -> Color {
-        match self {
-            CharKnowledge::Unknown => Color::StandardForeground,
-            CharKnowledge::WrongPosition => Color::Warning,
-            CharKnowledge::Correct => Color::Good,
-            CharKnowledge::Missing => Color::Error,
-        }
-    }
 }
 
 pub struct GridKnowledge<const N: usize> {

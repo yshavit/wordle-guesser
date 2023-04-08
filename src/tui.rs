@@ -148,7 +148,8 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
         let guessed_char = guess_ch.ch().unwrap_or(' ');
         let window_state = WindowState::new(&self.window);
 
-        window_state.set_color(guess_ch.knowledge().color());
+
+        window_state.set_color(color_for_knowledge(guess_ch.knowledge()));
         _ = self.window.printw(style.top);
         _ = self.window.mvprintw(
             window_state.orig_y + 1,
@@ -192,6 +193,15 @@ fn incr_usize(u: usize, max_exclusive: usize, up: bool, wrap: bool) -> usize {
         (Some(incremented), NO_WRAP) => min(incremented, max_exclusive - 1),
         (None, WRAP) => max_exclusive - 1,
         (None, NO_WRAP) => 0,
+    }
+}
+
+fn color_for_knowledge(knowledge: CharKnowledge) -> Color {
+    match knowledge {
+        CharKnowledge::Unknown => Color::StandardForeground,
+        CharKnowledge::WrongPosition => Color::Warning,
+        CharKnowledge::Correct => Color::Good,
+        CharKnowledge::Missing => Color::Error,
     }
 }
 
