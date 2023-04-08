@@ -1,5 +1,6 @@
 use pancurses::Input;
-use wordlehelper::analyze::analysis::CharCounts;
+use wordlehelper::analyze::char_stats::CharCounts;
+use wordlehelper::analyze::scored_chars::ScoredChars;
 
 use wordlehelper::guess::guesses::GuessGrid;
 use wordlehelper::guess::known_word_constraints::KnownWordConstraints;
@@ -27,8 +28,9 @@ fn main() {
             possible_words.filter(&known_constraints);
 
             let char_counts = CharCounts::new(&possible_words);
+            let scores = ScoredChars::new(&possible_words, &char_counts);
             scores_window.set_texts(
-                char_counts
+                scores
                     .all_word_scores()
                     .iter()
                     .take(50)
