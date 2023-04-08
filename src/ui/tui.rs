@@ -11,13 +11,6 @@ use std::thread;
 use std::time::Duration;
 use strum::EnumCount;
 
-#[derive(PartialEq)]
-pub enum UserAction {
-    SubmittedRow,
-    ChangedKnowledge,
-    Other,
-}
-
 pub struct MainWindow<const N: usize, const R: usize> {
     window: Window,
     active_row: usize,
@@ -79,30 +72,32 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
             self.draw_guess_grid(&guess_grid);
             self.refresh();
 
-            let action = match self.get_input() {
-                Some(Input::Character(c)) if c == '\x03' => {
-                    // ctrl-c
-                    break;
-                }
-                Some(Input::Character(c)) if c == '\x04' => {
-                    // ctrl-d
-                    words_window.scroll_down();
-                    UserAction::Other
-                }
-                Some(Input::Character(c)) if c == '\x15' => {
-                    // ctrl-u
-                    words_window.scroll_up();
-                    UserAction::Other
-                }
-                Some(input) => self.handle_input(&mut guess_grid, input),
-                _ => UserAction::Other,
+            let Some(input) = self.get_input() else {
+                continue;
             };
-            match action {
-                UserAction::SubmittedRow | UserAction::ChangedKnowledge => {
-                    refresh_words_list = true
-                }
+
+            match input {
+                Input::KeyUp => self.cycle_guess_knowledge(&mut guess_grid, true),
+                Input::KeyDown => self.cycle_guess_knowledge(&mut guess_grid, false),
+                Input::KeyRight => self.move_active_ch(true),
+                Input::KeyLeft => self.move_active_ch(false),
+                Input::Character(input_ch) => match input_ch {
+                    '\x03' => break,                      // ctrl-c
+                    '\x04' => words_window.scroll_down(), // ctrl-d
+                    '\x15' => words_window.scroll_up(),   // ctrl-u
+                    '\n' => self.handle_newline(&mut guess_grid),
+                    '\x7F' => {
+                        // delete
+                        self.unset_active_ch(&mut guess_grid.guess_mut(self.active_col));
+                        refresh_words_list = true;
+                    }
+                    _ => {
+                        self.set_active_ch(&mut guess_grid.guess_mut(self.active_col), input_ch);
+                        refresh_words_list = true;
+                    }
+                },
                 _ => {}
-            }
+            };
         }
     }
 
@@ -147,29 +142,6 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
             self.window.mv(orig_y, orig_x);
         }
         self.draw_active_marker()
-    }
-
-    pub fn handle_input(&mut self, grid: &mut GuessGrid<N, R>, input: Input) -> UserAction {
-        let guesses = &mut grid.guess_mut(self.active_row);
-        match input {
-            Input::KeyUp => self.cycle_guess_knowledge(guesses, true),
-            Input::KeyDown => self.cycle_guess_knowledge(guesses, false),
-            Input::KeyRight | Input::Character('\t') => self.move_active_ch(true),
-            Input::KeyLeft => self.move_active_ch(false),
-            Input::Character('\n') => {
-                self.handle_newline(grid);
-                return UserAction::SubmittedRow;
-            }
-            Input::Character('\x7F') => {
-                // delete
-                self.unset_active_ch(guesses);
-            }
-            Input::Character(c) => {
-                self.set_active_ch(guesses, c);
-            }
-            _ => {}
-        }
-        UserAction::ChangedKnowledge
     }
 
     fn handle_newline(&mut self, grid: &mut GuessGrid<N, R>) {
@@ -235,7 +207,9 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
         self.active_col = incr_usize(self.active_col, N, right, WRAP);
     }
 
-    fn cycle_guess_knowledge(&self, guess_str: &mut GuessStr<N>, up: bool) {
+    fn cycle_guess_knowledge(&self, grid: &mut GuessGrid<N, R>, up: bool) {
+        let guess_str = &mut grid.guess_mut(self.active_row);
+
         let guess_ch = guess_str.guess_mut(self.active_col);
         let curr_knowledge = guess_ch.knowledge();
         let next_idx = incr_usize(curr_knowledge as usize, CharKnowledge::COUNT, up, WRAP);
