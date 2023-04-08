@@ -1,3 +1,3 @@
-pub mod text_scroll_pane;
+mod text_scroll_pane;
 pub mod tui;
-pub mod window_helper;
+mod window_helper;

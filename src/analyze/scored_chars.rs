@@ -1,7 +1,7 @@
 use crate::analyze::char_stats::CharCounts;
+use crate::analyze::util;
 use crate::word_list::WordList;
 use std::collections::HashMap;
-use crate::analyze::util;
 
 pub struct ScoredChars<'a, const N: usize> {
     counts: &'a CharCounts<N>,

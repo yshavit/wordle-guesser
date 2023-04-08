@@ -5,12 +5,9 @@ use wordlehelper::analyze::scored_chars::ScoredChars;
 use wordlehelper::guess::guesses::GuessGrid;
 use wordlehelper::guess::known_word_constraints::KnownWordConstraints;
 use wordlehelper::ui::tui::{MainWindow, UserAction};
-use wordlehelper::ui::window_helper;
 use wordlehelper::word_list::WordList;
 
 fn main() {
-    window_helper::init();
-
     let mut main_window = MainWindow::init();
     let mut guess_grid = GuessGrid::<5, 6>::new();
     main_window.draw_guess_grid(&guess_grid);
