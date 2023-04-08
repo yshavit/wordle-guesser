@@ -1,15 +1,13 @@
 use pancurses::Input;
-use wordlehelper::analysis::CharCounts;
+use wordlehelper::analyze::char_stats::CharCounts;
+use wordlehelper::analyze::scored_chars::ScoredChars;
 
-use wordlehelper::guesses::GuessGrid;
-use wordlehelper::known_word_constraints::KnownWordConstraints;
-use wordlehelper::tui::{MainWindow, UserAction};
-use wordlehelper::window_helper;
+use wordlehelper::guess::guesses::GuessGrid;
+use wordlehelper::guess::known_word_constraints::KnownWordConstraints;
+use wordlehelper::ui::tui::{MainWindow, UserAction};
 use wordlehelper::word_list::WordList;
 
 fn main() {
-    window_helper::init();
-
     let mut main_window = MainWindow::init();
     let mut guess_grid = GuessGrid::<5, 6>::new();
     main_window.draw_guess_grid(&guess_grid);
@@ -27,8 +25,9 @@ fn main() {
             possible_words.filter(&known_constraints);
 
             let char_counts = CharCounts::new(&possible_words);
+            let scores = ScoredChars::new(&possible_words, &char_counts);
             scores_window.set_texts(
-                char_counts
+                scores
                     .all_word_scores()
                     .iter()
                     .take(50)

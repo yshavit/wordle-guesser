@@ -1,4 +1,4 @@
-use crate::guesses::{GuessGrid, GuessStr};
+use crate::guess::guesses::{GuessGrid, GuessStr};
 use std::cmp::{max, min};
 use std::collections::{HashMap, HashSet};
 use strum::{EnumCount, FromRepr};
