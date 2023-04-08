@@ -1,5 +1,5 @@
 use crate::guesses::{GuessChar, GuessGrid, GuessStr};
-use crate::knowledge::CharKnowledge;
+use crate::known_word_constraints::CharKnowledge;
 use crate::window_helper::{init, Color, TextScroll, WindowState};
 use pancurses::{endwin, Input, Window};
 use std::cmp::min;

@@ -1,6 +1,6 @@
 use std::slice::Iter;
 
-use crate::knowledge::CharKnowledge;
+use crate::known_word_constraints::CharKnowledge;
 
 pub struct GuessChar {
     knowledge: CharKnowledge,

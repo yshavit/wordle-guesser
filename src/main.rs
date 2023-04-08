@@ -2,7 +2,7 @@ use pancurses::Input;
 use wordlehelper::analysis::CharCounts;
 
 use wordlehelper::guesses::GuessGrid;
-use wordlehelper::knowledge::KnownWordConstraints;
+use wordlehelper::known_word_constraints::KnownWordConstraints;
 use wordlehelper::tui::{MainWindow, UserAction};
 use wordlehelper::window_helper;
 use wordlehelper::word_list::WordList;
