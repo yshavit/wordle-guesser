@@ -90,10 +90,10 @@ impl<const N: usize> GridKnowledge<N> {
 
     pub fn add_row(&mut self, str: &GuessStr<N>) {
         for (idx, guess_ch) in str.chars().enumerate() {
-            let Some(ch) = guess_ch.ch else {
+            let Some(ch) = guess_ch.ch() else {
                 continue;
             };
-            match guess_ch.knowledge {
+            match guess_ch.knowledge() {
                 CharKnowledge::Correct => self.fully_known[idx] = Some(ch),
                 CharKnowledge::WrongPosition => {
                     self.wrong_positions.get_mut(idx).unwrap().insert(ch);
@@ -131,10 +131,10 @@ impl LetterCounts {
         let mut result = Self::new(N);
 
         for guess in string.chars() {
-            let Some(mut ch) = guess.ch else {
+            let Some(mut ch) = guess.ch() else {
                 continue;
             };
-            match guess.knowledge {
+            match guess.knowledge() {
                 CharKnowledge::WrongPosition | CharKnowledge::Correct => {
                     ch = ch.to_ascii_uppercase();
                     let count = result.0.entry(ch).or_insert(Default::default());
@@ -145,10 +145,10 @@ impl LetterCounts {
             }
         }
         for guess in string.chars() {
-            let Some(mut ch) = guess.ch else {
+            let Some(mut ch) = guess.ch() else {
                 continue;
             };
-            if guess.knowledge == CharKnowledge::Missing {
+            if guess.knowledge() == CharKnowledge::Missing {
                 ch = ch.to_ascii_uppercase();
                 let count = result.0.entry(ch).or_insert(Default::default());
                 count.no_more_than = Some(count.at_least);
