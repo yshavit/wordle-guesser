@@ -1,21 +1,21 @@
-use pancurses::{endwin, initscr, Input};
+use pancurses::{Input};
 use wordlehelper::analysis::CharCounts;
 
-use wordlehelper::guesses::{GuessGrid, UserAction};
+use wordlehelper::guesses::{GuessGrid};
 use wordlehelper::knowledge::GridKnowledge;
+use wordlehelper::tui::{MainWindow, UserAction};
 use wordlehelper::window_helper;
-use wordlehelper::window_helper::TextScroll;
 use wordlehelper::word_list::WordList;
 
 fn main() {
-    let window = initscr();
-    window_helper::init(&window);
+    window_helper::init();
 
+    let main_window = MainWindow::init();
     let mut guess_grid = GuessGrid::<5, 6>::new();
-    guess_grid.draw(&window);
+    main_window.draw_guess_grid(&guess_grid);
 
-    let mut words_window = TextScroll::new(&window, window.get_max_y(), 30, 0, 28);
-    let mut scores_window = TextScroll::new(&window, window.get_max_y(), 30, 0, 64);
+    let mut words_window = main_window.create_text_scroll(None, 30, 0, 28);
+    let mut scores_window = main_window.create_text_scroll(None, 30, 0, 64);
     let mut refresh_words_list = true;
 
     loop {
@@ -45,11 +45,11 @@ fn main() {
             refresh_words_list = false;
         }
 
-        window.touch();
-        guess_grid.draw(&window);
-        window.refresh();
+        main_window.draw_guess_grid(&guess_grid);
+        main_window.refresh();
 
-        let action = match window.getch() {
+        // TODO probably move all of this to MainWindow
+        let action = match main_window.get_input() {
             Some(Input::Character(c)) if c == '\x03' => {
                 // ctrl-c
                 break;
@@ -64,7 +64,7 @@ fn main() {
                 words_window.scroll_up();
                 UserAction::Other
             }
-            Some(input) => guess_grid.handle_input(&window, input),
+            Some(input) => main_window.handle_input(&mut guess_grid, input),
             _ => UserAction::Other,
         };
         match action {
@@ -72,5 +72,4 @@ fn main() {
             _ => {}
         }
     }
-    endwin();
 }

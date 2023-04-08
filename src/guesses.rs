@@ -1,57 +1,15 @@
 use std::cmp::min;
 use std::slice::Iter;
-use std::thread;
-use std::time::Duration;
 
 use crate::knowledge::CharKnowledge;
-use crate::window_helper::{Color, WindowState};
-use pancurses::{Input, Window};
 use strum::EnumCount;
-
-pub struct BoxStyle<'a> {
-    top: &'a str,
-    vert: char,
-    bot: &'a str,
-}
-
-const STYLE_ACTIVE: BoxStyle = BoxStyle {
-    top: "╔═╗",
-    vert: '║',
-    bot: "╚═╝",
-};
-
-const STYLE_INACTIVE: BoxStyle = BoxStyle {
-    top: "╭─╮",
-    vert: '│',
-    bot: "╰─╯",
-};
 
 pub struct GuessChar {
     pub knowledge: CharKnowledge,
     pub ch: Option<char>,
 }
 
-#[derive(PartialEq)]
-pub enum UserAction {
-    SubmittedRow,
-    ChangedKnowledge,
-    Other,
-}
-
 impl GuessChar {
-    pub fn draw(&self, window: &Window, style: &BoxStyle) {
-        let guessed_char = self.ch.unwrap_or(' ');
-        let window_state = WindowState::new(window);
-
-        window_state.set_color(self.knowledge.color());
-        _ = window.printw(style.top);
-        _ = window.mvprintw(
-            window_state.orig_y + 1,
-            window_state.orig_x,
-            format!("{}{}{}", style.vert, guessed_char, style.vert),
-        );
-        _ = window.mvprintw(window_state.orig_y + 2, window_state.orig_x, style.bot);
-    }
 
     pub fn set_knowledge(&mut self, knowledge: CharKnowledge) {
         if let Some(_) = self.ch {
@@ -69,7 +27,7 @@ impl GuessChar {
 
 pub struct GuessStr<const N: usize> {
     guesses: Vec<GuessChar>,
-    active: Option<usize>,
+    active: Option<usize>, // TODO: "active" is a UI aspect, move this to a wrapper in tui.rs
 }
 
 impl<const N: usize> GuessStr<N> {
@@ -91,18 +49,12 @@ impl<const N: usize> GuessStr<N> {
         return self.guesses.iter();
     }
 
-    pub fn draw(&self, window: &Window) {
-        let (orig_y, orig_x) = window.get_cur_yx();
-        for (i, guess) in self.guesses.iter().enumerate() {
-            window.mv(orig_y, orig_x + (i as i32 * 4));
-            let style = if self.active.map(|active| active == i).unwrap_or(false) {
-                STYLE_ACTIVE
-            } else {
-                STYLE_INACTIVE
-            };
-            guess.draw(window, &style);
-        }
-        window.mv(orig_y, orig_x);
+    pub fn guesses(&self) -> &Vec<GuessChar> {
+        &self.guesses
+    }
+
+    pub fn active_ch(&self) -> Option<usize> {
+        self.active
     }
 
     pub fn cycle_guess_knowledge(&mut self, up: bool) {
@@ -152,7 +104,7 @@ impl<const N: usize> GuessStr<N> {
         }
     }
 
-    pub fn set_ch_direct(&mut self, ch: Option<char>) {
+    fn set_ch_direct(&mut self, ch: Option<char>) {
         if let Some(idx) = self.active {
             let active = self.guesses.get_mut(idx).expect("out of bounds");
             active.set_ch(ch);
@@ -162,7 +114,7 @@ impl<const N: usize> GuessStr<N> {
 
 pub struct GuessGrid<const N: usize, const R: usize> {
     guesses: Vec<GuessStr<N>>,
-    active: usize,
+    active: usize, // TODO "active" is a UI concern, move this there
 }
 
 impl<const N: usize, const R: usize> GuessGrid<N, R> {
@@ -182,69 +134,28 @@ impl<const N: usize, const R: usize> GuessGrid<N, R> {
         return self.guesses.iter();
     }
 
-    pub fn draw(&self, window: &Window) {
-        for (i, guess_str) in self.guesses.iter().enumerate() {
-            window.mv(3 * (i as i32), 3);
-            guess_str.draw(window);
-        }
-        self.draw_active_marker(window)
+    pub fn active_row(&self) -> usize {
+        self.active
     }
 
-    pub fn handle_input(&mut self, window: &Window, input: Input) -> UserAction {
-        let guesses = &mut self.guesses[self.active];
-        match input {
-            Input::KeyUp => guesses.cycle_guess_knowledge(true),
-            Input::KeyDown => guesses.cycle_guess_knowledge(false),
-            Input::KeyRight | Input::Character('\t') => guesses.move_active(true),
-            Input::KeyLeft => guesses.move_active(false),
-            Input::Character('\x7F') => guesses.unset_ch(),
-            Input::Character('\n') => {
-                self.handle_newline(window);
-                return UserAction::SubmittedRow;
-            }
-            Input::Character(c) => guesses.set_ch(c),
-            _ => {}
-        }
-        UserAction::ChangedKnowledge
+    pub fn guesses(&self) -> &Vec<GuessStr<{ N }>> {
+        &self.guesses
     }
 
-    fn handle_newline(&mut self, window: &Window) {
-        let active_row = &self.guesses[self.active];
-        if active_row
-            .guesses
-            .iter()
-            .any(|c| c.knowledge == CharKnowledge::Unknown)
-        {
-            self.report_error(window);
-        } else {
-            if self.active + 1 >= self.guesses.len() {
-                self.report_error(window);
-            } else {
-                let window_state = WindowState::new(window);
-                window_state.set_color(Color::Hidden);
-                self.guesses[self.active].active = None;
-                self.draw_active_marker(window);
-                window_state.set_color(Color::StandardForeground);
-                self.active += 1;
-                self.draw_active_marker(window);
-                self.guesses[self.active].active = Some(0);
-            }
-        }
+    pub fn active_guess(&mut self) -> &GuessStr<N> {
+        &self.guesses[self.active]
     }
 
-    fn draw_active_marker(&self, window: &Window) {
-        window.mv(3 * (self.active as i32) + 1, 1);
-        window.addstr("➤");
+    pub fn active_guess_mut(&mut self) -> &mut GuessStr<N> {
+        &mut self.guesses[self.active]
     }
 
-    fn report_error(&self, window: &Window) {
-        let window_state = WindowState::new(window);
-        for color in [Color::Error, Color::StandardForeground].repeat(2) {
-            window_state.set_color(color);
-            self.draw_active_marker(window);
-            window.refresh();
-            thread::sleep(Duration::from_millis(80));
-        }
+    pub fn set_active_char_on_active_row(&mut self, active: Option<usize>) {
+        self.guesses[self.active].active = active;
+    }
+
+    pub fn increment_active(&mut self) {
+        self.active += 1
     }
 }
 
