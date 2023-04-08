@@ -1,7 +1,7 @@
-use pancurses::{Input};
+use pancurses::Input;
 use wordlehelper::analysis::CharCounts;
 
-use wordlehelper::guesses::{GuessGrid};
+use wordlehelper::guesses::GuessGrid;
 use wordlehelper::knowledge::GridKnowledge;
 use wordlehelper::tui::{MainWindow, UserAction};
 use wordlehelper::window_helper;
@@ -27,12 +27,13 @@ fn main() {
             possible_words.filter(&knowledge);
 
             let char_counts = CharCounts::new(&possible_words);
-            scores_window.set_texts(char_counts
-                .all_word_scores()
-                .iter()
-                .take(50)
-                .map(|(word, score)| format!("{}: {:.3}", word, score))
-                .collect()
+            scores_window.set_texts(
+                char_counts
+                    .all_word_scores()
+                    .iter()
+                    .take(50)
+                    .map(|(word, score)| format!("{}: {:.3}", word, score))
+                    .collect(),
             );
 
             words_window.set_texts(

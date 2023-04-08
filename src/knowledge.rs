@@ -171,7 +171,7 @@ impl LetterCounts {
             if let Some(ceil) = no_more_than {
                 if at_least > ceil {
                     // We got conflicting data! Just ignore this letter
-                    continue
+                    continue;
                 }
             }
             my_count.at_least = at_least;

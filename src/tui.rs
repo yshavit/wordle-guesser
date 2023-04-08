@@ -1,9 +1,9 @@
-use std::thread;
-use std::time::Duration;
-use pancurses::{endwin, Input, Window};
 use crate::guesses::{GuessChar, GuessGrid, GuessStr};
 use crate::knowledge::CharKnowledge;
-use crate::window_helper::{Color, init, TextScroll, WindowState};
+use crate::window_helper::{init, Color, TextScroll, WindowState};
+use pancurses::{endwin, Input, Window};
+use std::thread;
+use std::time::Duration;
 
 #[derive(PartialEq)]
 pub enum UserAction {
@@ -13,7 +13,7 @@ pub enum UserAction {
 }
 
 pub struct MainWindow<const N: usize, const R: usize> {
-    window: Window
+    window: Window,
 }
 
 impl<const N: usize, const R: usize> Drop for MainWindow<N, R> {
@@ -24,9 +24,7 @@ impl<const N: usize, const R: usize> Drop for MainWindow<N, R> {
 
 impl<const N: usize, const R: usize> MainWindow<N, R> {
     pub fn init() -> Self {
-        MainWindow {
-            window: init()
-        }
+        MainWindow { window: init() }
     }
 
     pub fn refresh(&self) {
@@ -38,8 +36,20 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
         self.window.getch()
     }
 
-    pub fn create_text_scroll(&self, lines: Option<i32>, cols: i32, pos_y: i32, pos_x: i32) -> TextScroll {
-        TextScroll::new(&self.window, lines.unwrap_or(self.window.get_max_y()), cols, pos_y, pos_x)
+    pub fn create_text_scroll(
+        &self,
+        lines: Option<i32>,
+        cols: i32,
+        pos_y: i32,
+        pos_x: i32,
+    ) -> TextScroll {
+        TextScroll::new(
+            &self.window,
+            lines.unwrap_or(self.window.get_max_y()),
+            cols,
+            pos_y,
+            pos_x,
+        )
     }
 
     pub fn draw_guess_grid(&self, grid: &GuessGrid<N, R>) {
@@ -55,20 +65,20 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
         match input {
             Input::KeyUp => guesses.cycle_guess_knowledge(true),
             Input::KeyDown => guesses.cycle_guess_knowledge(false),
-            Input::KeyRight | Input::Character('\t') => guesses.move_active(true),
-            Input::KeyLeft => guesses.move_active(false),
-            Input::Character('\x7F') => guesses.unset_ch(),
+            Input::KeyRight | Input::Character('\t') => guesses.move_active_ch(true),
+            Input::KeyLeft => guesses.move_active_ch(false),
+            Input::Character('\x7F') => guesses.unset_active_ch(),
             Input::Character('\n') => {
                 self.handle_newline(grid);
                 return UserAction::SubmittedRow;
             }
-            Input::Character(c) => guesses.set_ch(c),
+            Input::Character(c) => guesses.set_active_ch(c),
             _ => {}
         }
         UserAction::ChangedKnowledge
     }
 
-    fn handle_newline(&self, grid: &mut GuessGrid<N, R>, ) {
+    fn handle_newline(&self, grid: &mut GuessGrid<N, R>) {
         let active_row = grid.active_guess();
         if active_row
             .guesses()
@@ -117,7 +127,11 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
         let (orig_y, orig_x) = self.window.get_cur_yx();
         for (i, guess) in guess_str.guesses().iter().enumerate() {
             self.window.mv(orig_y, orig_x + (i as i32 * 4));
-            let style = if guess_str.active_ch().map(|active| active == i).unwrap_or(false) {
+            let style = if guess_str
+                .active_ch()
+                .map(|active| active == i)
+                .unwrap_or(false)
+            {
                 STYLE_ACTIVE
             } else {
                 STYLE_INACTIVE
@@ -138,7 +152,9 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
             window_state.orig_x,
             format!("{}{}{}", style.vert, guessed_char, style.vert),
         );
-        _ = self.window.mvprintw(window_state.orig_y + 2, window_state.orig_x, style.bot);
+        _ = self
+            .window
+            .mvprintw(window_state.orig_y + 2, window_state.orig_x, style.bot);
     }
 }
 

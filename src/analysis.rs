@@ -1,5 +1,5 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
 use crate::word_list::WordList;
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 pub struct CharCounts<'a, const N: usize> {
     occurrence_by_char: BTreeMap<char, u32>,
@@ -16,7 +16,7 @@ impl<'a, const N: usize> CharCounts<'a, N> {
             word_count_by_char: HashMap::new(),
             total_chars: 0,
             words_count: 0,
-            words_list
+            words_list,
         };
         for word_and_freq in words_list.words() {
             let word = &word_and_freq.word;
