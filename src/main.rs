@@ -2,7 +2,7 @@ use pancurses::Input;
 use wordlehelper::analysis::CharCounts;
 
 use wordlehelper::guesses::GuessGrid;
-use wordlehelper::knowledge::GridKnowledge;
+use wordlehelper::knowledge::KnownWordConstraints;
 use wordlehelper::tui::{MainWindow, UserAction};
 use wordlehelper::window_helper;
 use wordlehelper::word_list::WordList;
@@ -20,11 +20,11 @@ fn main() {
 
     loop {
         if refresh_words_list {
-            let knowledge = GridKnowledge::from_grid(&guess_grid);
+            let known_constraints = KnownWordConstraints::from_grid(&guess_grid);
             // TODO we can keep just one list on the outside, and whittle it time every time the
             // user presses "enter"
             let mut possible_words = WordList::<5>::get_embedded(10000);
-            possible_words.filter(&knowledge);
+            possible_words.filter(&known_constraints);
 
             let char_counts = CharCounts::new(&possible_words);
             scores_window.set_texts(

@@ -1,4 +1,4 @@
-use crate::knowledge::GridKnowledge;
+use crate::knowledge::KnownWordConstraints;
 
 pub struct WordFreq {
     pub word: String,
@@ -36,7 +36,7 @@ impl<const N: usize> WordList<N> {
         return result;
     }
 
-    pub fn filter(&mut self, knowledge: &GridKnowledge<N>) {
+    pub fn filter(&mut self, knowledge: &KnownWordConstraints<N>) {
         self.words
             .retain(|word| knowledge.is_word_possible(&word.word))
     }

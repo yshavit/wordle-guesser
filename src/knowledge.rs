@@ -11,14 +11,14 @@ pub enum CharKnowledge {
     Missing,
 }
 
-pub struct GridKnowledge<const N: usize> {
+pub struct KnownWordConstraints<const N: usize> {
     fully_known: [Option<char>; N],
     wrong_positions: Vec<HashSet<char>>,
     missing: HashSet<char>,
-    letters_count: LetterCounts,
+    letters_count: KnowledgePerLetter,
 }
 
-impl<const N: usize> GridKnowledge<N> {
+impl<const N: usize> KnownWordConstraints<N> {
     pub fn is_word_possible(&self, word: &str) -> bool {
         // First, check all the positional info.
         for (idx, word_ch) in word.chars().enumerate() {
@@ -51,16 +51,14 @@ impl<const N: usize> GridKnowledge<N> {
         }
         return true;
     }
-}
 
-impl<const N: usize> GridKnowledge<N> {
     pub fn from_grid<const R: usize>(grid: &GuessGrid<N, R>) -> Self {
         // initial info
-        let mut result = GridKnowledge {
+        let mut result = KnownWordConstraints {
             fully_known: [None; N],
             wrong_positions: Vec::with_capacity(N),
             missing: HashSet::new(),
-            letters_count: LetterCounts::new(N),
+            letters_count: KnowledgePerLetter::new(N),
         };
         for _ in 0..N {
             result.wrong_positions.push(HashSet::new());
@@ -68,7 +66,7 @@ impl<const N: usize> GridKnowledge<N> {
 
         for row in grid.rows() {
             result.add_row(row);
-            let row_counts = LetterCounts::from(row);
+            let row_counts = KnowledgePerLetter::from(row);
             result.letters_count.add(&row_counts);
         }
         grid.rows().for_each(|r| result.add_row(r));
@@ -103,19 +101,19 @@ impl<const N: usize> GridKnowledge<N> {
 /// For example, if we guessed `F O O B R`, and got a "wrong position" for the first `O` but a
 /// "missing" for the second `O`, then we know that `LetterCount { at_least: 1, no_more_than: 1 }`.
 #[derive(Default)]
-struct LetterCount {
+struct LetterKnowledge {
     at_least: usize,
     no_more_than: Option<usize>,
 }
 
-struct LetterCounts(HashMap<char, LetterCount>);
+struct KnowledgePerLetter(HashMap<char, LetterKnowledge>);
 
-impl LetterCounts {
+impl KnowledgePerLetter {
     fn new(capacity: usize) -> Self {
-        LetterCounts(HashMap::with_capacity(capacity))
+        KnowledgePerLetter(HashMap::with_capacity(capacity))
     }
 
-    fn from<const N: usize>(string: &GuessStr<N>) -> LetterCounts {
+    fn from<const N: usize>(string: &GuessStr<N>) -> KnowledgePerLetter {
         let mut result = Self::new(N);
 
         for guess in string.chars() {
@@ -145,10 +143,10 @@ impl LetterCounts {
         return result;
     }
 
-    fn add(&mut self, other: &LetterCounts) {
+    fn add(&mut self, other: &KnowledgePerLetter) {
         for (ch, other_count) in &other.0 {
             let entry = self.0.entry(*ch);
-            let my_count = entry.or_insert_with(|| LetterCount::default());
+            let my_count = entry.or_insert_with(|| LetterKnowledge::default());
             let at_least = max(my_count.at_least, other_count.at_least);
             let no_more_than = match (my_count.no_more_than, other_count.no_more_than) {
                 (Some(my_ceil), Some(other_ceil)) => Some(min(my_ceil, other_ceil)),
