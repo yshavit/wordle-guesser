@@ -1,4 +1,4 @@
-use pancurses::{chtype, curs_set, init_pair, noecho, raw, start_color, Window};
+use pancurses::{chtype, curs_set, init_pair, initscr, noecho, raw, start_color, Window};
 use std::cmp::min;
 
 use strum::{EnumCount, FromRepr};
@@ -45,7 +45,9 @@ impl<'a> WindowState<'a> {
     }
 }
 
-pub fn init(window: &Window) {
+pub fn init() -> Window {
+    let window = initscr();
+
     window.keypad(true);
     curs_set(0);
     noecho();
@@ -63,6 +65,7 @@ pub fn init(window: &Window) {
         };
         init_pair(e as i16, fg, pancurses::COLOR_BLACK);
     }
+    window
 }
 
 pub struct TextScroll {
