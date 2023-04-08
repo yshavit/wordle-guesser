@@ -10,7 +10,7 @@ use wordlehelper::word_list::WordList;
 fn main() {
     window_helper::init();
 
-    let main_window = MainWindow::init();
+    let mut main_window = MainWindow::init();
     let mut guess_grid = GuessGrid::<5, 6>::new();
     main_window.draw_guess_grid(&guess_grid);
 

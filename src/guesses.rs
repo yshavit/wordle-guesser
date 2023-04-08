@@ -57,6 +57,10 @@ impl<const N: usize> GuessStr<N> {
         self.active_ch
     }
 
+    pub fn set_which_ch_act(&mut self, idx: Option<usize>) {
+        self.active_ch = idx
+    }
+
     // TODO move this to tui, too!
     pub fn cycle_guess_knowledge(&mut self, up: bool) {
         if let Some(active) = self.active_ch {
@@ -115,14 +119,12 @@ impl<const N: usize> GuessStr<N> {
 
 pub struct GuessGrid<const N: usize, const R: usize> {
     guesses: Vec<GuessStr<N>>,
-    active_row: usize, // TODO "active" is a UI concern, move this there
 }
 
 impl<const N: usize, const R: usize> GuessGrid<N, R> {
     pub fn new() -> Self {
         let mut result = GuessGrid {
             guesses: Vec::with_capacity(R),
-            active_row: 0,
         };
         for _ in 0..R {
             result.guesses.push(GuessStr::new())
@@ -135,28 +137,12 @@ impl<const N: usize, const R: usize> GuessGrid<N, R> {
         return self.guesses.iter();
     }
 
-    pub fn active_row(&self) -> usize {
-        self.active_row
-    }
-
     pub fn guesses(&self) -> &Vec<GuessStr<{ N }>> {
         &self.guesses
     }
 
-    pub fn active_guess(&mut self) -> &GuessStr<N> {
-        &self.guesses[self.active_row]
-    }
-
-    pub fn active_guess_mut(&mut self) -> &mut GuessStr<N> {
-        &mut self.guesses[self.active_row]
-    }
-
-    pub fn set_active_char_on_active_row(&mut self, active: Option<usize>) {
-        self.guesses[self.active_row].active_ch = active;
-    }
-
-    pub fn increment_active(&mut self) {
-        self.active_row += 1
+    pub fn guess_mut(&mut self, idx: usize) -> &mut GuessStr<N> {
+        &mut self.guesses[idx]
     }
 }
 

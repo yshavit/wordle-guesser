@@ -14,6 +14,7 @@ pub enum UserAction {
 
 pub struct MainWindow<const N: usize, const R: usize> {
     window: Window,
+    active_row: usize
 }
 
 impl<const N: usize, const R: usize> Drop for MainWindow<N, R> {
@@ -24,7 +25,10 @@ impl<const N: usize, const R: usize> Drop for MainWindow<N, R> {
 
 impl<const N: usize, const R: usize> MainWindow<N, R> {
     pub fn init() -> Self {
-        MainWindow { window: init() }
+        MainWindow {
+            window: init() ,
+            active_row: 0
+        }
     }
 
     pub fn refresh(&self) {
@@ -57,11 +61,11 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
             self.window.mv(3 * (i as i32), 3);
             self.draw_guess_str(guess_str);
         }
-        self.draw_active_marker(grid)
+        self.draw_active_marker()
     }
 
-    pub fn handle_input(&self, grid: &mut GuessGrid<N, R>, input: Input) -> UserAction {
-        let guesses = &mut grid.active_guess_mut();
+    pub fn handle_input(&mut self, grid: &mut GuessGrid<N, R>, input: Input) -> UserAction {
+        let guesses = &mut grid.guess_mut(self.active_row);
         match input {
             Input::KeyUp => guesses.cycle_guess_knowledge(true),
             Input::KeyDown => guesses.cycle_guess_knowledge(false),
@@ -78,49 +82,48 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
         UserAction::ChangedKnowledge
     }
 
-    fn handle_newline(&self, grid: &mut GuessGrid<N, R>) {
-        let active_row = grid.active_guess();
+    fn handle_newline(&mut self, grid: &mut GuessGrid<N, R>) {
+        let active_row = &grid.guesses()[self.active_row];
         if active_row
             .guesses()
             .iter()
             .any(|c| c.knowledge == CharKnowledge::Unknown)
         {
-            self.report_error(grid);
+            self.report_error();
         } else {
-            if grid.active_row() + 1 >= grid.guesses().len() {
-                self.report_error(grid);
+            if self.active_row + 1 >= grid.guesses().len() {
+                self.report_error();
             } else {
                 let window_state = WindowState::new(&self.window);
                 // deactivate all the char boxes on the current row (it's about to become inactive)
-                grid.set_active_char_on_active_row(None);
+                grid.guess_mut(self.active_row).set_which_ch_act(None);
                 // Hide the current active marker
                 window_state.set_color(Color::Hidden);
-                self.draw_active_marker(grid);
+                self.draw_active_marker();
 
                 // Paint the new active marker
-                grid.increment_active();
+                self.active_row += 1;
                 window_state.set_color(Color::StandardForeground);
-                self.draw_active_marker(grid);
+                self.draw_active_marker();
 
                 // Set the active char on the current row to 0.
-                grid.set_active_char_on_active_row(Some(0));
+                grid.guess_mut(self.active_row).set_which_ch_act(Some(0));
             }
         }
     }
 
-    fn report_error(&self, grid: &GuessGrid<N, R>) {
+    fn report_error(&self) {
         let window_state = WindowState::new(&self.window);
         for color in [Color::Error, Color::StandardForeground].repeat(2) {
             window_state.set_color(color);
-            self.draw_active_marker(grid);
+            self.draw_active_marker();
             self.window.refresh();
             thread::sleep(Duration::from_millis(80));
         }
     }
 
-    fn draw_active_marker(&self, grid: &GuessGrid<N, R>) {
-        self.window.mv(3 * (grid.active_row() as i32) + 1, 1);
-        self.window.addstr("➤");
+    fn draw_active_marker(&self) {
+        self.window.mvaddstr(3 * (self.active_row as i32) + 1, 1, "➤");
     }
 
     pub fn draw_guess_str(&self, guess_str: &GuessStr<N>) {
