@@ -1,7 +1,10 @@
+use crate::analyze::char_stats::CharCounts;
+use crate::analyze::scored_chars::ScoredChars;
 use crate::guess::guesses::{GuessChar, GuessGrid, GuessStr};
-use crate::guess::known_word_constraints::CharKnowledge;
+use crate::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};
 use crate::ui::text_scroll_pane::TextScroll;
 use crate::ui::window_helper::{init, Color, WindowState};
+use crate::word_list::WordList;
 use pancurses::{endwin, Input, Window};
 use std::cmp::min;
 use std::thread;
@@ -33,6 +36,73 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
             window: init(),
             active_row: 0,
             active_col: 0,
+        }
+    }
+
+    pub fn run_main_loop(&mut self) {
+        let mut guess_grid = GuessGrid::<N, R>::new();
+        self.draw_guess_grid(&guess_grid);
+
+        let mut words_window = self.create_text_scroll(None, 30, 0, 28);
+        let mut scores_window = self.create_text_scroll(None, 30, 0, 64);
+        let mut refresh_words_list = true;
+
+        loop {
+            if refresh_words_list {
+                let known_constraints = KnownWordConstraints::from_grid(&guess_grid);
+                // TODO we can keep just one list on the outside, and whittle it time every time the
+                // user presses "enter"
+                let mut possible_words = WordList::<N>::get_embedded(10000);
+                possible_words.filter(&known_constraints);
+
+                let char_counts = CharCounts::new(&possible_words);
+                let scores = ScoredChars::new(&possible_words, &char_counts);
+                scores_window.set_texts(
+                    scores
+                        .all_word_scores()
+                        .iter()
+                        .take(50)
+                        .map(|(word, score)| format!("{}: {:.3}", word, score))
+                        .collect(),
+                );
+
+                words_window.set_texts(
+                    possible_words
+                        .words()
+                        .iter()
+                        .map(|wf| wf.word.to_string())
+                        .collect(),
+                );
+                refresh_words_list = false;
+            }
+
+            self.draw_guess_grid(&guess_grid);
+            self.refresh();
+
+            let action = match self.get_input() {
+                Some(Input::Character(c)) if c == '\x03' => {
+                    // ctrl-c
+                    break;
+                }
+                Some(Input::Character(c)) if c == '\x04' => {
+                    // ctrl-d
+                    words_window.scroll_down();
+                    UserAction::Other
+                }
+                Some(Input::Character(c)) if c == '\x15' => {
+                    // ctrl-u
+                    words_window.scroll_up();
+                    UserAction::Other
+                }
+                Some(input) => self.handle_input(&mut guess_grid, input),
+                _ => UserAction::Other,
+            };
+            match action {
+                UserAction::SubmittedRow | UserAction::ChangedKnowledge => {
+                    refresh_words_list = true
+                }
+                _ => {}
+            }
         }
     }
 
