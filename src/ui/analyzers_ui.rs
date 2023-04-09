@@ -50,8 +50,7 @@ impl<const N: usize> Widget for AnalyzersUI<N> {
     fn handle_input(&mut self, input: Input) -> Option<Input> {
         match input {
             Input::Character('\t') => {
-                self.active_analyzer =
-                    incr_usize(self.active_analyzer, self.analyzers.len(), true, WRAP);
+                incr_usize(&mut self.active_analyzer, self.analyzers.len(), true, WRAP);
                 // TODO how do I redraw??
                 None
             }

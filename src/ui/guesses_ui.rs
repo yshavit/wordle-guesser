@@ -155,7 +155,7 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
     }
 
     fn move_active_ch(&mut self, right: bool) {
-        self.active_col = incr_usize(self.active_col, N, right, WRAP);
+        incr_usize(&mut self.active_col, N, right, WRAP);
     }
 
     fn cycle_guess_knowledge(&mut self, up: bool) {
@@ -163,7 +163,8 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
 
         let guess_ch = guess_str.guess_mut(self.active_col);
         let curr_knowledge = guess_ch.knowledge();
-        let next_idx = incr_usize(curr_knowledge as usize, CharKnowledge::COUNT, up, WRAP);
+        let mut next_idx = curr_knowledge as usize;
+        incr_usize(&mut next_idx, CharKnowledge::COUNT, up, WRAP);
         let next =
             CharKnowledge::from_repr(next_idx).expect(&format!("out of range for {}", next_idx));
         guess_ch.set_knowledge(next);
