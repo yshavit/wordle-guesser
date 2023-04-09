@@ -19,7 +19,7 @@ fn bench_analyzers(c: &mut Criterion) {
 fn bench_filter(c: &mut Criterion) {
     let mut group = c.benchmark_group("filter");
 
-    for size in [10, 100, 1_000, 10_000] {
+    for size in [10, 100, 1_000, 2_000, 5_000, 10_000] {
         group.throughput(Throughput::Elements(size));
         let words_5c: WordList<5> = WordList::get_embedded(size as usize);
         let mut grid = GuessGrid::<5, 1>::new();
