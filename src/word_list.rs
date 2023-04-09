@@ -12,13 +12,10 @@ pub struct WordList<const N: usize> {
 }
 
 impl<const N: usize> WordList<N> {
-    
     pub fn empty() -> Self {
-        WordList {
-            words: Vec::new(),
-        }
+        WordList { words: Vec::new() }
     }
-    
+
     pub fn get_embedded(limit: usize) -> Self {
         let file = include_str!("words-5chars.txt");
         let mut result = WordList {

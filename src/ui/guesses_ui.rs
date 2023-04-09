@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use crate::guess::guesses::{GuessChar, GuessGrid};
 use crate::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};
 use crate::ui::widget::Widget;
@@ -6,7 +5,9 @@ use crate::ui::window_helper::{Color, WindowState};
 use crate::util::{incr_usize, WRAP};
 use crate::word_list::WordList;
 use pancurses::{Input, Window};
+
 use std::cell::Cell;
+use std::rc::Rc;
 use std::thread;
 use std::time::Duration;
 use strum::EnumCount;
@@ -34,16 +35,16 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
         res
     }
 
-    pub fn handle_new_knowledge<'a, F>(&self, mut handler: F)
+    pub fn handle_new_knowledge<F>(&self, mut handler: F)
     where
-        F: FnMut(Cow<'a, WordList<N>>),
+        F: FnMut(Rc<WordList<N>>),
     {
         if self.has_new_knowledge.get() {
             // TODO we can keep one possible_words outside, and whittle it time every time the
             // user presses "enter"
             let mut possible_words = WordList::<N>::get_embedded(10000);
             possible_words.filter(&KnownWordConstraints::from_grid(&self.grid));
-            handler(Cow::Owned(possible_words));
+            handler(Rc::new(possible_words));
             self.has_new_knowledge.set(false);
         }
     }

@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-use std::ops::Deref;
 use crate::analyze::analyzer::{Analyzer, ScoredWord};
 use crate::ui::text_scroll_pane::TextScroll;
 use crate::ui::widget::Widget;
@@ -7,31 +5,33 @@ use crate::util::{incr_usize, WRAP};
 use crate::word_list::WordList;
 use pancurses::Input;
 
-pub struct AnalyzersUI<'a, const N: usize> {
+use std::ops::Deref;
+use std::rc::Rc;
+
+pub struct AnalyzersUI<const N: usize> {
     output: TextScroll,
     analyzers: Vec<Analyzer<N>>,
     active_analyzer: usize,
-    previous_words: Cow<'a, WordList<N>>
+    previous_words: Rc<WordList<N>>,
 }
 
-impl<'a, const N: usize> AnalyzersUI<'a, N> {
+impl<const N: usize> AnalyzersUI<N> {
     pub fn new(output: TextScroll, analyzers: Vec<Analyzer<N>>) -> Self {
         AnalyzersUI {
             output,
             analyzers,
             active_analyzer: 0,
-            previous_words: Cow::Owned(WordList::empty()),
+            previous_words: Rc::new(WordList::empty()),
         }
     }
 
-    pub fn analyze(&mut self, word_list: Cow<'a, WordList<N>>) {
+    pub fn analyze(&mut self, word_list: Rc<WordList<N>>) {
         self.previous_words = word_list;
         self.redraw();
     }
 }
 
-impl<'a, const N: usize> AnalyzersUI<'a, N> {
-
+impl<'a, const N: usize> AnalyzersUI<N> {
     fn redraw(&mut self) {
         let Some(analyzer) = self.analyzers.get(self.active_analyzer) else {
             return
@@ -46,10 +46,9 @@ impl<'a, const N: usize> AnalyzersUI<'a, N> {
             .collect();
         self.output.set_texts(texts);
     }
-
 }
 
-impl<'a, const N: usize> Widget for AnalyzersUI<'a, N> {
+impl<const N: usize> Widget for AnalyzersUI<N> {
     fn title(&self) -> Option<&str> {
         self.analyzers
             .get(self.active_analyzer)
