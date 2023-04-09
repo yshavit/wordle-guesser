@@ -7,7 +7,6 @@ use crate::ui::guesses_ui::GuessesUI;
 use crate::ui::text_scroll_pane::TextScroll;
 use crate::ui::widget::Widget;
 use crate::ui::window_helper::init;
-use crate::word_list::WordList;
 use pancurses::{endwin, Input, Window};
 
 pub struct MainWindow<const N: usize, const R: usize> {
@@ -48,12 +47,8 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
         );
 
         loop {
-            guesses_ui.handle_new_knowledge(|known_constraints| {
-                // TODO we can keep one possible_words outside, and whittle it time every time the
-                // user presses "enter"
-                let mut possible_words = WordList::<N>::get_embedded(10000);
-                possible_words.filter(&known_constraints);
-                analyzers_ui.analyze(&possible_words);
+            guesses_ui.handle_new_knowledge(|possible_words| {
+                analyzers_ui.analyze(possible_words);
 
                 words_window.set_texts(
                     possible_words

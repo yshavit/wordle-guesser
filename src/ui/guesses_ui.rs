@@ -8,6 +8,7 @@ use std::cmp::min;
 use std::thread;
 use std::time::Duration;
 use strum::EnumCount;
+use crate::word_list::WordList;
 
 pub struct GuessesUI<const N: usize, const R: usize> {
     window: Window,
@@ -34,12 +35,15 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
 
     pub fn handle_new_knowledge<F>(&self, mut handler: F)
     where
-        F: FnMut(&KnownWordConstraints<N>),
+        F: FnMut(&WordList<N>),
     {
         if self.has_new_knowledge.get() {
+            // TODO we can keep one possible_words outside, and whittle it time every time the
+            // user presses "enter"
+            let mut possible_words = WordList::<N>::get_embedded(10000);
+            possible_words.filter(&KnownWordConstraints::from_grid(&self.grid));
+            handler(&possible_words);
             self.has_new_knowledge.set(false);
-            let knowledge = KnownWordConstraints::from_grid(&self.grid);
-            handler(&knowledge);
         }
     }
 }
