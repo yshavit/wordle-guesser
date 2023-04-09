@@ -2,13 +2,15 @@ use crate::guess::guesses::{GuessChar, GuessGrid};
 use crate::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};
 use crate::ui::widget::Widget;
 use crate::ui::window_helper::{Color, WindowState};
+use crate::util::{incr_usize, WRAP};
+use crate::word_list::WordList;
 use pancurses::{Input, Window};
+
 use std::cell::Cell;
-use std::cmp::min;
+use std::rc::Rc;
 use std::thread;
 use std::time::Duration;
 use strum::EnumCount;
-use crate::word_list::WordList;
 
 pub struct GuessesUI<const N: usize, const R: usize> {
     window: Window,
@@ -16,6 +18,7 @@ pub struct GuessesUI<const N: usize, const R: usize> {
     active_row: usize,
     active_col: usize,
     has_new_knowledge: Cell<bool>,
+    possible_words: WordList<N>,
 }
 
 impl<const N: usize, const R: usize> GuessesUI<N, R> {
@@ -28,6 +31,7 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             active_row: 0,
             active_col: 0,
             has_new_knowledge: Cell::new(true),
+            possible_words: WordList::get_embedded(10_000),
         };
         res.draw_guess_grid();
         res
@@ -35,14 +39,12 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
 
     pub fn handle_new_knowledge<F>(&self, mut handler: F)
     where
-        F: FnMut(&WordList<N>),
+        F: FnMut(Rc<WordList<N>>),
     {
         if self.has_new_knowledge.get() {
-            // TODO we can keep one possible_words outside, and whittle it time every time the
-            // user presses "enter"
-            let mut possible_words = WordList::<N>::get_embedded(10000);
-            possible_words.filter(&KnownWordConstraints::from_grid(&self.grid));
-            handler(&possible_words);
+            let constraints = KnownWordConstraints::from_grid(&self.grid);
+            let possible_words = self.possible_words.preview_filter(&constraints);
+            handler(Rc::new(possible_words));
             self.has_new_knowledge.set(false);
         }
     }
@@ -150,12 +152,15 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
 
                 // Set the active char on the current row to 0.
                 self.active_col = 0;
+
+                // Reify the possible words
+                self.possible_words.filter(&KnownWordConstraints::from_grid(&self.grid));
             }
         }
     }
 
     fn move_active_ch(&mut self, right: bool) {
-        self.active_col = incr_usize(self.active_col, N, right, WRAP);
+        incr_usize(&mut self.active_col, N, right, WRAP);
     }
 
     fn cycle_guess_knowledge(&mut self, up: bool) {
@@ -163,7 +168,8 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
 
         let guess_ch = guess_str.guess_mut(self.active_col);
         let curr_knowledge = guess_ch.knowledge();
-        let next_idx = incr_usize(curr_knowledge as usize, CharKnowledge::COUNT, up, WRAP);
+        let mut next_idx = curr_knowledge as usize;
+        incr_usize(&mut next_idx, CharKnowledge::COUNT, up, WRAP);
         let next =
             CharKnowledge::from_repr(next_idx).expect(&format!("out of range for {}", next_idx));
         guess_ch.set_knowledge(next);
@@ -200,15 +206,6 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
     }
 }
 
-fn incr_usize(u: usize, max_exclusive: usize, up: bool, wrap: bool) -> usize {
-    match (u.checked_add_signed(if up { 1 } else { -1 }), wrap) {
-        (Some(incremented), WRAP) => incremented % max_exclusive,
-        (Some(incremented), NO_WRAP) => min(incremented, max_exclusive - 1),
-        (None, WRAP) => max_exclusive - 1,
-        (None, NO_WRAP) => 0,
-    }
-}
-
 fn color_for_knowledge(knowledge: CharKnowledge) -> Color {
     match knowledge {
         CharKnowledge::Unknown => Color::StandardForeground,
@@ -235,6 +232,3 @@ const STYLE_INACTIVE: BoxStyle = BoxStyle {
     vert: '│',
     bot: "╰─╯",
 };
-
-const WRAP: bool = true;
-const NO_WRAP: bool = false;

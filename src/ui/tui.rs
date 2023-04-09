@@ -1,12 +1,12 @@
-use crate::analyze::char_stats::CharCounts;
-use crate::analyze::scored_chars::ScoredChars;
+use crate::analyze::{scored_chars, words_by_freq};
 
-use crate::analyze::analyzer::{Analyzer};
+use crate::analyze::analyzer::Analyzer;
 use crate::ui::analyzers_ui::AnalyzersUI;
 use crate::ui::guesses_ui::GuessesUI;
 use crate::ui::text_scroll_pane::TextScroll;
 use crate::ui::widget::Widget;
 use crate::ui::window_helper::init;
+use crate::word_list::WordList;
 use pancurses::{endwin, Input, Window};
 
 pub struct MainWindow<const N: usize, const R: usize> {
@@ -27,42 +27,27 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
     pub fn run_main_loop(&mut self) {
         let mut guesses_ui: GuessesUI<N, R> = GuessesUI::new(&self.window, 0, 0);
 
-        let mut words_window = self.create_text_scroll(None, 30, 0, 28);
-        words_window.set_title("All words");
-
-        let scores_window = self.create_text_scroll(None, 30, 0, 64);
-
         let mut analyzers_ui = AnalyzersUI::new(
-            scores_window,
+            self.create_text_scroll(None, 30, 0, 34),
             vec![
-                Analyzer{
+                Analyzer {
                     name: "Scored Words".to_string(),
-                    func: |word_list| {
-                        let char_counts = CharCounts::new(word_list);
-                        let scores = ScoredChars::new(&word_list, &char_counts);
-                        scores.all_word_scores()
-                    },
-                }
+                    func: |wl| scored_chars::analyze(wl),
+                },
+                Analyzer {
+                    name: "Words by frequency".to_string(),
+                    func: |wl: &WordList<N>| words_by_freq::words_by_frequency(wl),
+                },
             ],
         );
 
         loop {
-            guesses_ui.handle_new_knowledge(|possible_words| {
-                analyzers_ui.analyze(possible_words);
-
-                words_window.set_texts(
-                    possible_words
-                        .words()
-                        .iter()
-                        .map(|wf| wf.word.to_string())
-                        .collect(),
-                );
-            });
+            guesses_ui.handle_new_knowledge(|possible_words| analyzers_ui.analyze(possible_words));
 
             self.refresh();
 
             let mut maybe_input = self.get_input();
-            let mut widgets: Vec<&mut dyn Widget> = vec![(&mut guesses_ui), (&mut analyzers_ui), (&mut words_window)];
+            let mut widgets: Vec<&mut dyn Widget> = vec![(&mut guesses_ui), (&mut analyzers_ui)];
 
             while let Some(input) = maybe_input {
                 match input {

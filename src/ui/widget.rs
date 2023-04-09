@@ -1,6 +1,3 @@
-
-
-
 use pancurses::Input;
 
 pub trait Widget {
