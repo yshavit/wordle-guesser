@@ -1,4 +1,5 @@
-use pancurses::{chtype, curs_set, init_pair, initscr, noecho, raw, start_color, Window};
+use pancurses::{chtype, curs_set, endwin, init_pair, initscr, noecho, raw, start_color, Window};
+use std::panic;
 
 use strum::{EnumCount, FromRepr};
 
@@ -46,6 +47,9 @@ impl<'a> WindowState<'a> {
 
 pub fn init() -> Window {
     let window = initscr();
+    panic::set_hook(Box::new(|_panic_info| {
+        endwin();
+    }));
 
     window.keypad(true);
     curs_set(0);

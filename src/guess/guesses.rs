@@ -68,7 +68,6 @@ impl<const N: usize> Default for GuessStr<N> {
     }
 }
 
-
 pub struct GuessGrid<const N: usize, const R: usize> {
     guesses: [GuessStr<N>; R],
 }
