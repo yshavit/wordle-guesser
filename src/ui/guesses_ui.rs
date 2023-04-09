@@ -136,26 +136,25 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             .any(|c| c.knowledge() == CharKnowledge::Unknown)
         {
             self.report_error();
+        } else if self.active_row + 1 >= N {
+            self.report_error();
         } else {
-            if self.active_row + 1 >= N {
-                self.report_error();
-            } else {
-                let window_state = WindowState::new(&self.window);
-                // Hide the current active marker
-                window_state.set_color(Color::Hidden);
-                self.draw_active_marker();
+            let window_state = WindowState::new(&self.window);
+            // Hide the current active marker
+            window_state.set_color(Color::Hidden);
+            self.draw_active_marker();
 
-                // Paint the new active marker
-                self.active_row += 1;
-                window_state.set_color(Color::StandardForeground);
-                self.draw_active_marker();
+            // Paint the new active marker
+            self.active_row += 1;
+            window_state.set_color(Color::StandardForeground);
+            self.draw_active_marker();
 
-                // Set the active char on the current row to 0.
-                self.active_col = 0;
+            // Set the active char on the current row to 0.
+            self.active_col = 0;
 
-                // Reify the possible words
-                self.possible_words.filter(&KnownWordConstraints::from_grid(&self.grid));
-            }
+            // Reify the possible words
+            self.possible_words
+                .filter(&KnownWordConstraints::from_grid(&self.grid));
         }
     }
 
