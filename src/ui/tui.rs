@@ -38,6 +38,7 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
 
         let mut words_window = self.create_text_scroll(None, 30, 0, 28);
         let mut scores_window = self.create_text_scroll(None, 30, 0, 64);
+        words_window.set_title(Some("Words whatever 1234567890abcdefghijklmnopqrstuvwzyz".to_string()));
         let mut refresh_words_list = true;
 
         loop {

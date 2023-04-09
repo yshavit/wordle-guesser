@@ -1,8 +1,10 @@
+use std::borrow::Cow;
 use pancurses::Window;
 use std::cmp::min;
 
 pub struct TextScroll {
     window: Window,
+    title: Option<String>,
     texts: Vec<String>,
     first_visible_idx: usize,
 }
@@ -16,9 +18,14 @@ impl TextScroll {
             window: owner
                 .subwin(lines_trunc, cols_trunc, pos_y, pos_x)
                 .expect("couldn't create text scroll pane"),
+            title: None,
             texts: Vec::new(),
             first_visible_idx: 0,
         }
+    }
+
+    pub fn set_title(&mut self, title: Option<String>) {
+        self.title = title
     }
 
     pub fn set_texts(&mut self, texts: Vec<String>) {
@@ -42,7 +49,7 @@ impl TextScroll {
 
     fn redraw(&self) {
         let (max_y, max_x) = self.window.get_max_yx();
-        if max_y < 2 || max_x < 4 {
+        if max_y < 3 || max_x < 4 {
             return;
         }
         // We're going for something like this:
@@ -54,17 +61,49 @@ impl TextScroll {
         // └──────┴─┘
 
         // header
-        let main_pane_width = max_x - 4;
+        let main_pane_width = max_x - 4; // 1 for the left │, 3 for │<space>│ of the scroll bar
         let main_pane_width_usize = main_pane_width as usize;
 
-        let main_pane_h_bar: String = std::iter::repeat('─').take(main_pane_width_usize).collect();
+        fn rep_str(ch: char, size: usize) -> String {
+            std::iter::repeat(ch).take(size).collect()
+        }
 
-        self.window.mvaddstr(0, 0, "┌");
-        self.window.printw(&main_pane_h_bar);
-        self.window.printw("┬─┐");
+        let main_pane_h_bar: String = rep_str('─', main_pane_width_usize);
+
+        let use_title = if max_y >= 5 { &self.title } else {&None};
+        match use_title {
+            None => {
+                self.window.mvaddstr(0, 0, "┌");
+                self.window.printw(&main_pane_h_bar);
+                self.window.printw("┬─┐");
+            },
+            Some(title) => {
+                let title_width = (max_x - 2) as usize;
+                let title_truncated = if title.len() <= title_width {
+                    Cow::Borrowed(title)
+                } else {
+                    let mut truncated = title[0..title_width].to_string();
+                    truncated.replace_range(title_width-1..title_width, "…");
+                    Cow::Owned(truncated)
+                };
+                self.window.mvaddstr(0, 0, "╭");
+                self.window.printw(&main_pane_h_bar);
+                self.window.printw("──");
+                self.window.printw("╮");
+                // main_pain_width is the total width minus 4. We don't lose any space from the
+                // scroll bar for the title, but we still want total width minus 4: 1 on each side
+                // for the vertical bars, and then 1 each on each side for padding.
+
+                self.window.mvaddstr(1, 0, format!("│{:<title_width$}│", title_truncated));
+                self.window.mvaddstr(2, 0, "┝");
+                self.window.printw(rep_str('━', main_pane_width_usize));
+                self.window.printw("┯━┥");
+            }
+        };
+        let first_body_row = self.window.get_cur_y();
 
         // Scroll bar
-        let num_rows = (max_y - 2) as usize; // -2 for header and footer
+        let num_rows = (max_y - first_body_row - 1) as usize; // -1 for footer
         let num_rows_f64 = num_rows as f64;
         let height = if num_rows >= self.texts.len() {
             0
@@ -104,19 +143,19 @@ impl TextScroll {
 
         // text rows
         let empty_str = &("".to_string());
-        for pos_y in 1..max_y - 1 {
-            let pos_within_main = (pos_y - 1) as usize; // header row doesn't count
+        for main_pane_y in 0..max_y - first_body_row {
+            let main_pane_y_usize = main_pane_y as usize;
             let print_scroller = scroller_block
                 .as_ref()
-                .map(|r| r.contains(&pos_within_main))
+                .map(|r| r.contains(&main_pane_y_usize))
                 .unwrap_or(false);
             let scroller = if print_scroller { '█' } else { ' ' };
             let text = self
                 .texts
-                .get(self.first_visible_idx + pos_within_main)
+                .get(self.first_visible_idx + main_pane_y_usize)
                 .unwrap_or(empty_str);
             let write = format!("│{:<main_pane_width_usize$}│{}│", text, scroller);
-            self.window.mvaddstr(pos_y, 0, write);
+            self.window.mvaddstr(main_pane_y + first_body_row, 0, write);
         }
         // footer
         self.window.mvaddstr(max_y - 1, 0, "└");
