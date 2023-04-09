@@ -1,5 +1,5 @@
-use std::borrow::Cow;
 use pancurses::Window;
+use std::borrow::Cow;
 use std::cmp::min;
 
 pub struct TextScroll {
@@ -70,20 +70,20 @@ impl TextScroll {
 
         let main_pane_h_bar: String = rep_str('─', main_pane_width_usize);
 
-        let use_title = if max_y >= 5 { &self.title } else {&None};
+        let use_title = if max_y >= 5 { &self.title } else { &None };
         match use_title {
             None => {
                 self.window.mvaddstr(0, 0, "┌");
                 self.window.printw(&main_pane_h_bar);
                 self.window.printw("┬─┐");
-            },
+            }
             Some(title) => {
                 let title_width = (max_x - 2) as usize;
                 let title_truncated = if title.len() <= title_width {
                     Cow::Borrowed(title)
                 } else {
                     let mut truncated = title[0..title_width].to_string();
-                    truncated.replace_range(title_width-1..title_width, "…");
+                    truncated.replace_range(title_width - 1..title_width, "…");
                     Cow::Owned(truncated)
                 };
                 self.window.mvaddstr(0, 0, "╭");
@@ -94,7 +94,8 @@ impl TextScroll {
                 // scroll bar for the title, but we still want total width minus 4: 1 on each side
                 // for the vertical bars, and then 1 each on each side for padding.
 
-                self.window.mvaddstr(1, 0, format!("│{:<title_width$}│", title_truncated));
+                self.window
+                    .mvaddstr(1, 0, format!("│{:<title_width$}│", title_truncated));
                 self.window.mvaddstr(2, 0, "┝");
                 self.window.printw(rep_str('━', main_pane_width_usize));
                 self.window.printw("┯━┥");

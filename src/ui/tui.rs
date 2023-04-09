@@ -38,7 +38,9 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
 
         let mut words_window = self.create_text_scroll(None, 30, 0, 28);
         let mut scores_window = self.create_text_scroll(None, 30, 0, 64);
-        words_window.set_title(Some("Words whatever 1234567890abcdefghijklmnopqrstuvwzyz".to_string()));
+        words_window.set_title(Some(
+            "Words whatever 1234567890abcdefghijklmnopqrstuvwzyz".to_string(),
+        ));
         let mut refresh_words_list = true;
 
         loop {
@@ -81,11 +83,11 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
                 Input::KeyUp => {
                     self.cycle_guess_knowledge(&mut guess_grid, true);
                     refresh_words_list = true;
-                },
+                }
                 Input::KeyDown => {
                     self.cycle_guess_knowledge(&mut guess_grid, false);
                     refresh_words_list = true;
-                },
+                }
                 Input::KeyRight => self.move_active_ch(true),
                 Input::KeyLeft => self.move_active_ch(false),
                 Input::Character(input_ch) => match input_ch {
