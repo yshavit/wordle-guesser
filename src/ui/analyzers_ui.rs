@@ -1,8 +1,9 @@
-use pancurses::Input;
 use crate::analyze::analyzer::{Analyzer, ScoredWord};
 use crate::ui::text_scroll_pane::TextScroll;
 use crate::ui::widget::Widget;
+use crate::util::{incr_usize, WRAP};
 use crate::word_list::WordList;
+use pancurses::Input;
 
 pub struct AnalyzersUI<const N: usize> {
     output: TextScroll,
@@ -37,7 +38,9 @@ impl<const N: usize> AnalyzersUI<N> {
 
 impl<const N: usize> Widget for AnalyzersUI<N> {
     fn title(&self) -> Option<&str> {
-        self.analyzers.get(self.active_analyzer).map(|a| &a.name as &str)
+        self.analyzers
+            .get(self.active_analyzer)
+            .map(|a| &a.name as &str)
     }
 
     fn set_active(&mut self, _active: bool) {
@@ -45,6 +48,14 @@ impl<const N: usize> Widget for AnalyzersUI<N> {
     }
 
     fn handle_input(&mut self, input: Input) -> Option<Input> {
-        self.output.handle_input(input)
+        match input {
+            Input::Character('\t') => {
+                self.active_analyzer =
+                    incr_usize(self.active_analyzer, self.analyzers.len(), true, WRAP);
+                // TODO how do I redraw??
+                None
+            }
+            _ => self.output.handle_input(input),
+        }
     }
 }

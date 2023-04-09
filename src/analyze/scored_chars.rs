@@ -1,13 +1,18 @@
-use crate::analyze::analyzer::{ScoredWord};
+use crate::analyze::analyzer::ScoredWord;
 use crate::analyze::char_stats::CharCounts;
 use crate::analyze::util;
 use crate::word_list::WordList;
 use std::collections::HashMap;
 
-
 pub struct ScoredChars<'a, 'b, const N: usize> {
     counts: &'a CharCounts<N>,
     words_list: &'b WordList<N>,
+}
+
+pub fn analyze<const N: usize>(words_list: &WordList<N>) -> Vec<ScoredWord> {
+    let char_counts = CharCounts::new(words_list);
+    let scorer = ScoredChars::new(&words_list, &char_counts);
+    scorer.all_word_scores()
 }
 
 impl<'a, 'b, const N: usize> ScoredChars<'a, 'b, N> {

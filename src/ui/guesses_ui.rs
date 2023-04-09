@@ -2,13 +2,13 @@ use crate::guess::guesses::{GuessChar, GuessGrid};
 use crate::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};
 use crate::ui::widget::Widget;
 use crate::ui::window_helper::{Color, WindowState};
+use crate::util::{incr_usize, WRAP};
+use crate::word_list::WordList;
 use pancurses::{Input, Window};
 use std::cell::Cell;
-use std::cmp::min;
 use std::thread;
 use std::time::Duration;
 use strum::EnumCount;
-use crate::word_list::WordList;
 
 pub struct GuessesUI<const N: usize, const R: usize> {
     window: Window,
@@ -200,15 +200,6 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
     }
 }
 
-fn incr_usize(u: usize, max_exclusive: usize, up: bool, wrap: bool) -> usize {
-    match (u.checked_add_signed(if up { 1 } else { -1 }), wrap) {
-        (Some(incremented), WRAP) => incremented % max_exclusive,
-        (Some(incremented), NO_WRAP) => min(incremented, max_exclusive - 1),
-        (None, WRAP) => max_exclusive - 1,
-        (None, NO_WRAP) => 0,
-    }
-}
-
 fn color_for_knowledge(knowledge: CharKnowledge) -> Color {
     match knowledge {
         CharKnowledge::Unknown => Color::StandardForeground,
@@ -235,6 +226,3 @@ const STYLE_INACTIVE: BoxStyle = BoxStyle {
     vert: '│',
     bot: "╰─╯",
 };
-
-const WRAP: bool = true;
-const NO_WRAP: bool = false;
