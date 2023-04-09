@@ -18,6 +18,7 @@ pub struct GuessesUI<const N: usize, const R: usize> {
     active_row: usize,
     active_col: usize,
     has_new_knowledge: Cell<bool>,
+    possible_words: WordList<N>,
 }
 
 impl<const N: usize, const R: usize> GuessesUI<N, R> {
@@ -30,6 +31,7 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             active_row: 0,
             active_col: 0,
             has_new_knowledge: Cell::new(true),
+            possible_words: WordList::get_embedded(10_000),
         };
         res.draw_guess_grid();
         res
@@ -40,10 +42,8 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
         F: FnMut(Rc<WordList<N>>),
     {
         if self.has_new_knowledge.get() {
-            // TODO we can keep one possible_words outside, and whittle it time every time the
-            // user presses "enter"
-            let mut possible_words = WordList::<N>::get_embedded(10000);
-            possible_words.filter(&KnownWordConstraints::from_grid(&self.grid));
+            let constraints = KnownWordConstraints::from_grid(&self.grid);
+            let possible_words = self.possible_words.preview_filter(&constraints);
             handler(Rc::new(possible_words));
             self.has_new_knowledge.set(false);
         }
@@ -152,6 +152,9 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
 
                 // Set the active char on the current row to 0.
                 self.active_col = 0;
+
+                // Reify the possible words
+                self.possible_words.filter(&KnownWordConstraints::from_grid(&self.grid));
             }
         }
     }

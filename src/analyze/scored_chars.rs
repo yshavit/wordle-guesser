@@ -52,7 +52,7 @@ impl<'a, 'b, const N: usize> ScoredChars<'a, 'b, N> {
         let all_words = self.words_list.words();
         let all_char_scores = self.all_char_scores();
 
-        let mut result = Vec::with_capacity(all_words.capacity());
+        let mut result = Vec::with_capacity(all_words.total_length());
         for word_freq in all_words {
             let word = &word_freq.word;
             let mut score = 0.0;
