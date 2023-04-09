@@ -1,3 +1,4 @@
+use std::cell::Cell;
 use crate::guess::guesses::{GuessChar, GuessGrid};
 use crate::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};
 use crate::ui::widget::Widget;
@@ -13,6 +14,7 @@ pub struct GuessesUI<const N: usize, const R: usize> {
     grid: GuessGrid<N, R>,
     active_row: usize,
     active_col: usize,
+    has_new_knowledge: Cell<bool>,
 }
 
 impl<const N: usize, const R: usize> GuessesUI<N, R> {
@@ -24,17 +26,25 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             grid: GuessGrid::new(),
             active_row: 0,
             active_col: 0,
+            has_new_knowledge: Cell::new(true),
         };
         res.draw_guess_grid();
         res
     }
 
-    pub fn get_known_constraints(&self) -> KnownWordConstraints<N> {
-        KnownWordConstraints::from_grid(&self.grid)
+    pub fn handle_new_knowledge<F>(&self, mut handler: F)
+    where
+        F: FnMut(&KnownWordConstraints<N>),
+    {
+        if self.has_new_knowledge.get() {
+            self.has_new_knowledge.set(false);
+            let knowledge = KnownWordConstraints::from_grid(&self.grid);
+            handler(&knowledge);
+        }
     }
 }
 
-impl<const N: usize, const R: usize> Widget for GuessesUI<N, R> {
+impl<'a, const N: usize, const R: usize> Widget for GuessesUI<N, R> {
     fn title(&self) -> Option<&str> {
         None
     }
@@ -57,10 +67,12 @@ impl<const N: usize, const R: usize> Widget for GuessesUI<N, R> {
             Input::Character('\n') => self.handle_newline(),
             Input::Character('\x7F') => self.unset_active_ch(), // delete
             Input::Character(input_ch) if input_ch.is_ascii_alphabetic() => {
-                if !self.set_active_ch(input_ch) {
+                if self.set_active_ch(input_ch) {
+                    self.has_new_knowledge.set(true);
+                } else {
                     return Some(input);
                 }
-            },
+            }
             _ => {
                 return Some(input);
             }
@@ -151,13 +163,15 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
         let next =
             CharKnowledge::from_repr(next_idx).expect(&format!("out of range for {}", next_idx));
         guess_ch.set_knowledge(next);
+        self.has_new_knowledge.set(true);
     }
 
     fn unset_active_ch(&mut self) {
         let guess_str = &mut self.grid.guess_mut(self.active_row);
         let old = guess_str.guess_mut(self.active_col).unset_ch();
-        if let None = old {
-            self.move_active_ch(false);
+        match old {
+            Some(_) => self.has_new_knowledge.set(true),
+            None => self.move_active_ch(false),
         }
     }
 

@@ -1,7 +1,7 @@
+use crate::ui::widget::Widget;
 use pancurses::{Input, Window};
 use std::borrow::Cow;
 use std::cmp::min;
-use crate::ui::widget::Widget;
 
 pub struct TextScroll {
     window: Window,
@@ -27,8 +27,8 @@ impl TextScroll {
         text_scroll
     }
 
-    pub fn set_title(&mut self, title: Option<String>) {
-        self.title = title
+    pub fn set_title(&mut self, title: &str) {
+        self.title = Some(title.to_string());
     }
 
     pub fn set_texts(&mut self, texts: Vec<String>) {
@@ -73,7 +73,6 @@ impl Widget for TextScroll {
 }
 
 impl TextScroll {
-
     fn redraw(&self) {
         let (max_y, max_x) = self.window.get_max_yx();
         if max_y < 3 || max_x < 4 {
