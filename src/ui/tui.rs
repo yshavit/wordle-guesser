@@ -1,7 +1,8 @@
 use crate::analyze::char_stats::CharCounts;
 use crate::analyze::scored_chars::ScoredChars;
 
-
+use crate::analyze::analyzer::{Analyzer};
+use crate::ui::analyzers_ui::AnalyzersUI;
 use crate::ui::guesses_ui::GuessesUI;
 use crate::ui::text_scroll_pane::TextScroll;
 use crate::ui::widget::Widget;
@@ -30,8 +31,21 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
         let mut words_window = self.create_text_scroll(None, 30, 0, 28);
         words_window.set_title("All words");
 
-        let mut scores_window = self.create_text_scroll(None, 30, 0, 64);
-        scores_window.set_title("Suggestions");
+        let scores_window = self.create_text_scroll(None, 30, 0, 64);
+
+        let mut analyzers_ui = AnalyzersUI::new(
+            scores_window,
+            vec![
+                Analyzer{
+                    name: "Scored Words".to_string(),
+                    func: |word_list| {
+                        let char_counts = CharCounts::new(word_list);
+                        let scores = ScoredChars::new(&word_list, &char_counts);
+                        scores.all_word_scores()
+                    },
+                }
+            ],
+        );
 
         loop {
             guesses_ui.handle_new_knowledge(|known_constraints| {
@@ -39,17 +53,7 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
                 // user presses "enter"
                 let mut possible_words = WordList::<N>::get_embedded(10000);
                 possible_words.filter(&known_constraints);
-
-                let char_counts = CharCounts::new(&possible_words);
-                let scores = ScoredChars::new(&possible_words, &char_counts);
-                scores_window.set_texts(
-                    scores
-                        .all_word_scores()
-                        .iter()
-                        .take(150)
-                        .map(|(word, score)| format!("{}: {:.3}", word, score))
-                        .collect(),
-                );
+                analyzers_ui.analyze(&possible_words);
 
                 words_window.set_texts(
                     possible_words
@@ -63,8 +67,7 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
             self.refresh();
 
             let mut maybe_input = self.get_input();
-            let mut widgets: Vec<&mut dyn Widget> =
-                vec![(&mut guesses_ui), (&mut scores_window), (&mut words_window)];
+            let mut widgets: Vec<&mut dyn Widget> = vec![(&mut guesses_ui), (&mut analyzers_ui), (&mut words_window)];
 
             while let Some(input) = maybe_input {
                 match input {

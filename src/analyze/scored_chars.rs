@@ -1,15 +1,17 @@
+use crate::analyze::analyzer::{ScoredWord};
 use crate::analyze::char_stats::CharCounts;
 use crate::analyze::util;
 use crate::word_list::WordList;
 use std::collections::HashMap;
 
-pub struct ScoredChars<'a, const N: usize> {
+
+pub struct ScoredChars<'a, 'b, const N: usize> {
     counts: &'a CharCounts<N>,
-    words_list: &'a WordList<N>,
+    words_list: &'b WordList<N>,
 }
 
-impl<'a, const N: usize> ScoredChars<'a, N> {
-    pub fn new(words_list: &'a WordList<N>, char_counts: &'a CharCounts<N>) -> Self {
+impl<'a, 'b, const N: usize> ScoredChars<'a, 'b, N> {
+    pub fn new(words_list: &'b WordList<N>, char_counts: &'a CharCounts<N>) -> Self {
         ScoredChars {
             counts: char_counts,
             words_list,
@@ -41,7 +43,7 @@ impl<'a, const N: usize> ScoredChars<'a, N> {
         result
     }
 
-    pub fn all_word_scores(&self) -> Vec<(&'a str, f64)> {
+    pub fn all_word_scores(&self) -> Vec<ScoredWord<'b>> {
         let all_words = self.words_list.words();
         let all_char_scores = self.all_char_scores();
 
@@ -53,9 +55,8 @@ impl<'a, const N: usize> ScoredChars<'a, N> {
                 score += all_char_scores.get(&ch).unwrap_or(&0.0)
             }
             score *= word_freq.freq as f64;
-            result.push((&word as &str, score))
+            result.push(ScoredWord { word, score });
         }
-        result.sort_by(|a, b| b.1.total_cmp(&a.1));
         result
     }
 }

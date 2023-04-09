@@ -1,9 +1,9 @@
-use std::cell::Cell;
 use crate::guess::guesses::{GuessChar, GuessGrid};
 use crate::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};
 use crate::ui::widget::Widget;
 use crate::ui::window_helper::{Color, WindowState};
 use pancurses::{Input, Window};
+use std::cell::Cell;
 use std::cmp::min;
 use std::thread;
 use std::time::Duration;
