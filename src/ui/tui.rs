@@ -78,8 +78,14 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
             };
 
             match input {
-                Input::KeyUp => self.cycle_guess_knowledge(&mut guess_grid, true),
-                Input::KeyDown => self.cycle_guess_knowledge(&mut guess_grid, false),
+                Input::KeyUp => {
+                    self.cycle_guess_knowledge(&mut guess_grid, true);
+                    refresh_words_list = true;
+                },
+                Input::KeyDown => {
+                    self.cycle_guess_knowledge(&mut guess_grid, false);
+                    refresh_words_list = true;
+                },
                 Input::KeyRight => self.move_active_ch(true),
                 Input::KeyLeft => self.move_active_ch(false),
                 Input::Character(input_ch) => match input_ch {
@@ -89,11 +95,11 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
                     '\n' => self.handle_newline(&mut guess_grid),
                     '\x7F' => {
                         // delete
-                        self.unset_active_ch(&mut guess_grid.guess_mut(self.active_col));
+                        self.unset_active_ch(&mut guess_grid.guess_mut(self.active_row));
                         refresh_words_list = true;
                     }
                     _ => {
-                        self.set_active_ch(&mut guess_grid.guess_mut(self.active_col), input_ch);
+                        self.set_active_ch(&mut guess_grid.guess_mut(self.active_row), input_ch);
                         refresh_words_list = true;
                     }
                 },
