@@ -28,7 +28,7 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
         let mut guesses_ui: GuessesUI<N, R> = GuessesUI::new(&self.window, 0, 0);
 
         let mut analyzers_ui = AnalyzersUI::new(
-            self.create_text_scroll(None, 30, 0, 64),
+            self.create_text_scroll(None, 30, 0, 34),
             vec![
                 Analyzer {
                     name: "Scored Words".to_string(),

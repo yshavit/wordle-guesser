@@ -1,15 +1,24 @@
 use crate::guess::known_word_constraints::KnownWordConstraints;
 
+#[derive(Clone)]
 pub struct WordFreq {
     pub word: String,
     pub freq: u32,
 }
 
+#[derive(Clone)]
 pub struct WordList<const N: usize> {
     words: Vec<WordFreq>,
 }
 
 impl<const N: usize> WordList<N> {
+    
+    pub fn empty() -> Self {
+        WordList {
+            words: Vec::new(),
+        }
+    }
+    
     pub fn get_embedded(limit: usize) -> Self {
         let file = include_str!("words-5chars.txt");
         let mut result = WordList {
