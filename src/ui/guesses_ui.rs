@@ -56,7 +56,11 @@ impl<const N: usize, const R: usize> Widget for GuessesUI<N, R> {
             Input::KeyRight | Input::KeyLeft => self.move_active_ch(input == Input::KeyRight),
             Input::Character('\n') => self.handle_newline(),
             Input::Character('\x7F') => self.unset_active_ch(), // delete
-            Input::Character(input_ch) => self.set_active_ch(input_ch),
+            Input::Character(input_ch) if input_ch.is_ascii_alphabetic() => {
+                if !self.set_active_ch(input_ch) {
+                    return Some(input);
+                }
+            },
             _ => {
                 return Some(input);
             }
@@ -151,16 +155,20 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
 
     fn unset_active_ch(&mut self) {
         let guess_str = &mut self.grid.guess_mut(self.active_row);
-        let old = guess_str.guess_mut(self.active_col).set_ch(None);
+        let old = guess_str.guess_mut(self.active_col).unset_ch();
         if let None = old {
             self.move_active_ch(false);
         }
     }
 
-    fn set_active_ch(&mut self, ch: char) {
+    fn set_active_ch(&mut self, ch: char) -> bool {
         let guess_str = &mut self.grid.guess_mut(self.active_row);
-        guess_str.guess_mut(self.active_col).set_ch(Some(ch));
-        self.move_active_ch(true);
+        if guess_str.guess_mut(self.active_col).set_ch(ch) {
+            self.move_active_ch(true);
+            true
+        } else {
+            false
+        }
     }
 
     fn report_error(&self) {

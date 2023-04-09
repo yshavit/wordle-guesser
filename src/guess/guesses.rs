@@ -24,15 +24,25 @@ impl GuessChar {
         }
     }
 
-    pub fn set_ch(&mut self, ch: Option<char>) -> Option<char> {
-        let old = self.ch;
-        match ch {
-            Some(ch) if ch.is_ascii_alphabetic() => {
-                self.ch = Some(ch.to_ascii_uppercase());
-            }
-            None => self.ch = None,
-            Some(_) => {} // keep it as-is
+    /// Sets the char, as long as it's a valid char. Returns whether it was a valid char.
+    ///
+    /// If `ch` is a valid char, then this also resets `self`'s knowledge to `Unknown`, unless the
+    /// new char is the same as the old one. In this case, the invocation is a no-op but still
+    /// returns `true` (since the char was valid).
+    pub fn set_ch(&mut self, ch: char) -> bool {
+        if self.ch == Some(ch) {
+            return true;
         }
+        if !ch.is_ascii_alphabetic() {
+            return false;
+        }
+        self.ch = Some(ch.to_ascii_uppercase());
+        true
+    }
+
+    pub fn unset_ch(&mut self) -> Option<char> {
+        let old = self.ch;
+        self.ch = None;
         self.knowledge = CharKnowledge::Unknown;
         old
     }

@@ -28,6 +28,7 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
 
         let mut words_window = self.create_text_scroll(None, 30, 0, 28);
         let mut scores_window = self.create_text_scroll(None, 30, 0, 64);
+
         words_window.set_title(Some(
             "Words whatever 1234567890abcdefghijklmnopqrstuvwzyz".to_string(),
         ));
@@ -63,18 +64,28 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
 
             self.refresh();
 
-            let Some(input) = self.get_input() else {
-                continue;
-            };
+            let mut maybe_input = self.get_input();
+            let mut widgets: Vec<&mut dyn Widget> = vec![
+                (&mut guesses_ui),
+                (&mut scores_window),
+                (&mut words_window),
+            ];
 
-            let input = match input {
-                Input::Character(c) if c == '\x03' => break, // ctrl-c
-                _ => guesses_ui.handle_input(input),
-            };
-            match input {
-                Some(Input::Character('\x04')) => words_window.scroll_down(), // ctrl-d
-                Some(Input::Character('\x15')) => words_window.scroll_up(),   // ctrl-u
-                _ => {}
+            while let Some(input) = maybe_input {
+                match input {
+                    Input::Character(c) if c == '\x03' => {
+                        // ctrl-c
+                        return;
+                    },
+                    _ => {
+                        for widget in widgets.iter_mut() {
+                            maybe_input = widget.handle_input(input);
+                            if maybe_input == None {
+                                break
+                            }
+                        }
+                    },
+                };
             }
         }
     }

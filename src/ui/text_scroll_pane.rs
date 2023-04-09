@@ -1,6 +1,7 @@
-use pancurses::Window;
+use pancurses::{Input, Window};
 use std::borrow::Cow;
 use std::cmp::min;
+use crate::ui::widget::Widget;
 
 pub struct TextScroll {
     window: Window,
@@ -14,14 +15,16 @@ impl TextScroll {
         let (owner_max_y, owner_max_x) = owner.get_max_yx();
         let lines_trunc = min(lines, owner_max_y - pos_y);
         let cols_trunc = min(cols, owner_max_x - pos_x);
-        TextScroll {
+        let text_scroll = TextScroll {
             window: owner
                 .subwin(lines_trunc, cols_trunc, pos_y, pos_x)
                 .expect("couldn't create text scroll pane"),
             title: None,
             texts: Vec::new(),
             first_visible_idx: 0,
-        }
+        };
+        text_scroll.redraw();
+        text_scroll
     }
 
     pub fn set_title(&mut self, title: Option<String>) {
@@ -46,6 +49,30 @@ impl TextScroll {
         self.first_visible_idx = self.first_visible_idx.saturating_sub(1);
         self.redraw();
     }
+}
+
+impl Widget for TextScroll {
+    fn title(&self) -> Option<&str> {
+        (&self.title).as_ref().map(|s| s as &str)
+    }
+
+    fn set_active(&mut self, _active: bool) {
+        // nothing
+    }
+
+    fn handle_input(&mut self, input: Input) -> Option<Input> {
+        match input {
+            Input::Character('\x04') => self.scroll_down(), // ctrl-d
+            Input::Character('\x15') => self.scroll_up(),   // ctrl-u
+            _ => {
+                return Some(input);
+            }
+        }
+        None
+    }
+}
+
+impl TextScroll {
 
     fn redraw(&self) {
         let (max_y, max_x) = self.window.get_max_yx();
