@@ -2,6 +2,7 @@ use std::slice::Iter;
 
 use crate::guess::known_word_constraints::CharKnowledge;
 
+#[derive(Default)]
 pub struct GuessChar {
     knowledge: CharKnowledge,
     ch: Option<char>,
@@ -38,28 +39,21 @@ impl GuessChar {
 }
 
 pub struct GuessStr<const N: usize> {
-    guesses: Vec<GuessChar>,
+    guesses: [GuessChar; N],
 }
 
 impl<const N: usize> GuessStr<N> {
     pub fn new() -> Self {
-        let mut result = GuessStr {
-            guesses: Vec::with_capacity(N),
-        };
-        for _ in 0..N {
-            result.guesses.push(GuessChar {
-                knowledge: CharKnowledge::Unknown,
-                ch: None,
-            })
+        GuessStr {
+            guesses: init_array(),
         }
-        return result;
     }
 
     pub fn chars(&self) -> Iter<'_, GuessChar> {
         return self.guesses.iter();
     }
 
-    pub fn guesses(&self) -> &Vec<GuessChar> {
+    pub fn guesses(&self) -> &[GuessChar; N] {
         &self.guesses
     }
 
@@ -68,30 +62,37 @@ impl<const N: usize> GuessStr<N> {
     }
 }
 
+impl<const N: usize> Default for GuessStr<N> {
+    fn default() -> Self {
+        GuessStr::new()
+    }
+}
+
+
 pub struct GuessGrid<const N: usize, const R: usize> {
-    guesses: Vec<GuessStr<N>>,
+    guesses: [GuessStr<N>; R],
 }
 
 impl<const N: usize, const R: usize> GuessGrid<N, R> {
     pub fn new() -> Self {
-        let mut result = GuessGrid {
-            guesses: Vec::with_capacity(R),
-        };
-        for _ in 0..R {
-            result.guesses.push(GuessStr::new())
+        GuessGrid {
+            guesses: init_array(),
         }
-        return result;
     }
 
     pub fn rows(&self) -> Iter<'_, GuessStr<N>> {
         return self.guesses.iter();
     }
 
-    pub fn guesses(&self) -> &Vec<GuessStr<{ N }>> {
+    pub fn guesses(&self) -> &[GuessStr<{ N }>] {
         &self.guesses
     }
 
     pub fn guess_mut(&mut self, idx: usize) -> &mut GuessStr<N> {
         &mut self.guesses[idx]
     }
+}
+
+fn init_array<T: Default, const N: usize>() -> [T; N] {
+    [(); N].map(|_| T::default())
 }

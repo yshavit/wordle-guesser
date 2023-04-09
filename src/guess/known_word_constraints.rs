@@ -11,6 +11,12 @@ pub enum CharKnowledge {
     Missing,
 }
 
+impl Default for CharKnowledge {
+    fn default() -> Self {
+        CharKnowledge::Unknown
+    }
+}
+
 pub struct KnownWordConstraints<const N: usize> {
     fully_known: [Option<char>; N],
     wrong_positions: Vec<HashSet<char>>,
