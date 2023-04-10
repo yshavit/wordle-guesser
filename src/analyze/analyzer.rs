@@ -1,3 +1,4 @@
+use crate::analyze::position_chars::CharPositionScorer;
 use crate::analyze::scored_chars::CharScorer;
 use crate::analyze::words_by_freq::WordsByFrequency;
 use crate::word_list::WordList;
@@ -10,6 +11,7 @@ pub trait Analyzer<const N: usize> {
 
 pub fn standard_suite<const N: usize>() -> Vec<Box<dyn Analyzer<N>>> {
     vec![
+        Box::new(CharPositionScorer {}),
         Box::new(CharScorer {
             double_count_freq: false,
         }),
@@ -39,6 +41,7 @@ impl<'a> ScoredWord<'a> {
                 word.score = 100.0 * (word.score - min_score) / (max_score - min_score);
             }
         } else if min_score.is_finite() && min_score == max_score {
+            // This happens if there was only one word; min and max are equal
             for word in words {
                 word.score = 100.0;
             }

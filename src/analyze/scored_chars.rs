@@ -32,7 +32,8 @@ impl<const N: usize> Analyzer<N> for CharScorer<N> {
             "Scored Chars (2x-count freq)"
         } else {
             "Scored Chars (std)"
-        }.to_string()
+        }
+        .to_string()
     }
 
     fn analyze<'a>(&self, words_list: &'a WordList<N>) -> Vec<ScoredWord<'a>> {

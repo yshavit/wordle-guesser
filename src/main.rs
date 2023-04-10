@@ -12,7 +12,7 @@ fn main() {
     } else {
         let auto_guesser: AutoGuesser<5, 6> = AutoGuesser {
             answer_words: try_words,
-            words_list: WordList::get_embedded(10_000),
+            words_list: WordList::get_embedded_std(),
             analyzers: analyzer::standard_suite(),
         };
         for result in auto_guesser.guess_all() {

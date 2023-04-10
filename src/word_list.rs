@@ -27,6 +27,10 @@ impl<const N: usize> WordList<N> {
         Empty
     }
 
+    pub fn get_embedded_std() -> Self {
+        Self::get_embedded(5_500)
+    }
+
     pub fn get_embedded(limit: usize) -> Self {
         let file = include_str!("words-5chars.txt");
         let mut words = Vec::with_capacity(file.chars().filter(|c| c == &'\n').count());
@@ -105,6 +109,14 @@ impl<const N: usize> WordList<N> {
                 allowed_words: allowed.iter_ones(),
                 total_length: allowed.count_ones(),
             },
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        match self {
+            Empty => 0,
+            Reified { words } => words.as_ref().len(),
+            Filtered { allowed, .. } => allowed.count_ones(),
         }
     }
 }
