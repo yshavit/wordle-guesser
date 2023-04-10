@@ -77,7 +77,7 @@ impl<const N: usize> WordList<N> {
         }
     }
 
-    pub fn preview_filter(&self, knowledge: &KnownWordConstraints<N>) -> Self {
+    pub fn filter_preview(&self, knowledge: &KnownWordConstraints<N>) -> Self {
         let mut new = match self {
             Empty => Empty,
             Reified { words } => Filtered {

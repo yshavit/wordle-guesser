@@ -1,12 +1,10 @@
-use crate::analyze::{scored_chars, words_by_freq};
-
 use crate::analyze::analyzer::Analyzer;
 use crate::ui::analyzers_ui::AnalyzersUI;
 use crate::ui::guesses_ui::GuessesUI;
 use crate::ui::text_scroll_pane::TextScroll;
 use crate::ui::widget::Widget;
 use crate::ui::window_helper::init;
-use crate::word_list::WordList;
+
 use pancurses::{endwin, Input, Window};
 
 pub struct MainWindow<const N: usize, const R: usize> {
@@ -29,16 +27,7 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
 
         let mut analyzers_ui = AnalyzersUI::new(
             self.create_text_scroll(None, 30, 0, 34),
-            vec![
-                Analyzer {
-                    name: "Scored Words".to_string(),
-                    func: |wl| scored_chars::analyze(wl),
-                },
-                Analyzer {
-                    name: "Words by frequency".to_string(),
-                    func: |wl: &WordList<N>| words_by_freq::words_by_frequency(wl),
-                },
-            ],
+            Analyzer::standard_suite(),
         );
 
         loop {

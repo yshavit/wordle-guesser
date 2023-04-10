@@ -43,7 +43,7 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
     {
         if self.has_new_knowledge.get() {
             let constraints = KnownWordConstraints::from_grid(&self.grid);
-            let possible_words = self.possible_words.preview_filter(&constraints);
+            let possible_words = self.possible_words.filter_preview(&constraints);
             handler(Rc::new(possible_words));
             self.has_new_knowledge.set(false);
         }

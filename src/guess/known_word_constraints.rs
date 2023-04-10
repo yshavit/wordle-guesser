@@ -58,17 +58,21 @@ impl<const N: usize> KnownWordConstraints<N> {
         return true;
     }
 
-    pub fn from_grid<const R: usize>(grid: &GuessGrid<N, R>) -> Self {
-        // initial info
+    pub fn empty() -> Self {
         let mut result = KnownWordConstraints {
             fully_known: [None; N],
-            wrong_positions: Vec::with_capacity(N),
+            wrong_positions: Vec::with_capacity(N), // TODO make this into an array?
             missing: HashSet::new(),
             letters_count: KnowledgePerLetter::new(N),
         };
         for _ in 0..N {
             result.wrong_positions.push(HashSet::new());
         }
+        result
+    }
+
+    pub fn from_grid<const R: usize>(grid: &GuessGrid<N, R>) -> Self {
+        let mut result = Self::empty();
 
         for row in grid.rows() {
             result.add_row(row);
