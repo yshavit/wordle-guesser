@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use wordlehelper::analyze::analyzer::Analyzer;
+use wordlehelper::analyze::analyzer;
 use wordlehelper::guess::guesses::GuessGrid;
 use wordlehelper::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};
 use wordlehelper::word_list::WordList;
@@ -7,11 +7,11 @@ use wordlehelper::word_list::WordList;
 fn bench_analyzers(c: &mut Criterion) {
     let mut group = c.benchmark_group("analyzers");
     let words_5c: WordList<5> = WordList::get_embedded(10_000);
-    for analyzer in Analyzer::<5>::standard_suite() {
+    for analyzer in analyzer::standard_suite() {
         group.bench_with_input(
-            BenchmarkId::new("filter", analyzer.name),
+            BenchmarkId::new("filter", analyzer.name()),
             &words_5c,
-            |b, words| b.iter(|| (analyzer.func)(words)),
+            |b, words| b.iter(|| analyzer.analyze(words)),
         );
     }
 }

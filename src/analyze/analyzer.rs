@@ -1,17 +1,22 @@
-use crate::word_list::WordList;
-use std::cmp::Ordering;
 use crate::analyze::scored_chars::CharScorer;
 use crate::analyze::words_by_freq::WordsByFrequency;
+use crate::word_list::WordList;
+use std::cmp::Ordering;
 
 pub trait Analyzer<const N: usize> {
     fn name(&self) -> String;
     fn analyze<'a>(&self, words_list: &'a WordList<N>) -> Vec<ScoredWord<'a>>;
 }
 
-pub fn standard_suite<const N: usize>() -> Vec<Box<dyn Analyzer<N>>>{
+pub fn standard_suite<const N: usize>() -> Vec<Box<dyn Analyzer<N>>> {
     vec![
-        Box::new(CharScorer{}),
-        Box::new(WordsByFrequency{}),
+        Box::new(CharScorer {
+            double_count_freq: false,
+        }),
+        Box::new(CharScorer {
+            double_count_freq: true,
+        }),
+        Box::new(WordsByFrequency {}),
     ]
 }
 

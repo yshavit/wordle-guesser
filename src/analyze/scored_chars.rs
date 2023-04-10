@@ -4,34 +4,64 @@ use crate::analyze::util;
 use crate::word_list::WordList;
 use std::collections::HashMap;
 
-pub struct CharScorer<const N: usize> {}
+pub struct CharScorer<const N: usize> {
+    /// An individual char's score is basically how well it bisects all of the word; this metric
+    /// inherently includes the char's frequency in that word list. Then, a word's overall score can
+    /// be one of two things:
+    ///
+    /// 1. The sum of its chars' benefits; or
+    /// 2. The sum of the chars' benefits, weighted to how likely we are to actually see that char.
+    ///
+    /// The second one of those seems useful at first: if a char is very beneficial, but unlikely
+    /// to be seen, then it's probably not great.
+    ///
+    /// But actually that double-counts the frequency, since the benefit calculation itself included
+    /// that frequency. Besides, if a char is rare, then it won't bisect the words list: so it won't
+    /// be beneficial anyway!
+    ///
+    /// So, including that weight essentially double-counts the frequency, and in doing so makes
+    /// this analysis much closer to just "the most frequent words".
+    ///
+    /// It's recommended to keep this value off.
+    pub double_count_freq: bool,
+}
 
 impl<const N: usize> Analyzer<N> for CharScorer<N> {
     fn name(&self) -> String {
-        "Scored Chars".to_string()
+        if self.double_count_freq {
+            "Scored Chars (2x-count freq)"
+        } else {
+            "Scored Chars (std)"
+        }.to_string()
     }
 
     fn analyze<'a>(&self, words_list: &'a WordList<N>) -> Vec<ScoredWord<'a>> {
         let char_counts = CharCounts::new(words_list);
-        let scorer = ScoredChars::new(&words_list, &char_counts);
+        let scorer = ScoredChars::new(&words_list, &char_counts, self.double_count_freq);
         scorer.all_word_scores()
     }
 }
 
 struct ScoredChars<'a, 'b, const N: usize> {
+    char_score_includes_frequency: bool,
     counts: &'a CharCounts<N>,
     words_list: &'b WordList<N>,
 }
 
 impl<'a, 'b, const N: usize> ScoredChars<'a, 'b, N> {
-    pub fn new(words_list: &'b WordList<N>, char_counts: &'a CharCounts<N>) -> Self {
+    pub fn new(
+        words_list: &'b WordList<N>,
+        char_counts: &'a CharCounts<N>,
+        double_count_freq: bool,
+    ) -> Self {
         ScoredChars {
             counts: char_counts,
             words_list,
+            char_score_includes_frequency: double_count_freq,
         }
     }
 
-    /// (likelihood of presence) * (benefit), where:
+    /// This is the char's likely benefit, where:
     /// - likelihood of presence is just `(char_occurrence / total)`
     /// - benefit is how closely it comes to bisecting the set. Specifically:
     ///   - let `words_count` be the total number of words we know, and `char_words` be the number
@@ -67,7 +97,9 @@ impl<'a, 'b, const N: usize> ScoredChars<'a, 'b, N> {
             for ch in util::uniq_chars(word) {
                 score += all_char_scores.get(&ch).unwrap_or(&0.0)
             }
-            score *= word_freq.freq as f64;
+            if self.char_score_includes_frequency {
+                score *= word_freq.freq as f64;
+            }
             result.push(ScoredWord { word, score });
         }
         result

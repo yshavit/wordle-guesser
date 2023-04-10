@@ -1,7 +1,7 @@
 use crate::analyze::analyzer::{Analyzer, ScoredWord};
 use crate::word_list::{WordFreq, WordList};
 
-pub struct WordsByFrequency{}
+pub struct WordsByFrequency {}
 
 impl<const N: usize> Analyzer<N> for WordsByFrequency {
     fn name(&self) -> String {
