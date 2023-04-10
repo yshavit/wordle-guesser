@@ -2,7 +2,7 @@ use std::slice::Iter;
 
 use crate::guess::known_word_constraints::CharKnowledge;
 
-#[derive(Default)]
+#[derive(Default, Clone, PartialEq, Eq)]
 pub struct GuessChar {
     knowledge: CharKnowledge,
     ch: Option<char>,
@@ -37,6 +37,7 @@ impl GuessChar {
             return false;
         }
         self.ch = Some(ch.to_ascii_uppercase());
+        self.knowledge = CharKnowledge::Unknown;
         true
     }
 

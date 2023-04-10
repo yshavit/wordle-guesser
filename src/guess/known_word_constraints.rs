@@ -3,7 +3,7 @@ use std::cmp::{max, min};
 use std::collections::{HashMap, HashSet};
 use strum::{EnumCount, FromRepr};
 
-#[derive(Copy, Clone, PartialEq, EnumCount, FromRepr)]
+#[derive(Copy, Clone, PartialEq, Eq, EnumCount, FromRepr)]
 pub enum CharKnowledge {
     Unknown,
     WrongPosition,

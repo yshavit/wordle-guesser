@@ -73,10 +73,9 @@ impl<'a, const N: usize, const R: usize> Widget for GuessesUI<N, R> {
             Input::Character('\n') => self.handle_newline(),
             Input::Character('\x7F') => self.unset_active_ch(), // delete
             Input::Character(input_ch) if input_ch.is_ascii_alphabetic() => {
-                if self.set_active_ch(input_ch) {
-                    self.has_new_knowledge.set(true);
-                } else {
+                if !(self.set_active_ch(input_ch)) {
                     return Some(input);
+                } else {
                 }
             }
             _ => {
@@ -186,8 +185,14 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
 
     fn set_active_ch(&mut self, ch: char) -> bool {
         let guess_str = &mut self.grid.guess_mut(self.active_row);
+        let had_knowledge_before =
+            guess_str.guesses()[self.active_col].knowledge() != CharKnowledge::Unknown;
         if guess_str.guess_mut(self.active_col).set_ch(ch) {
             self.move_active_ch(true);
+            if had_knowledge_before {
+                // We don't have knowledge after set_ch, so if we used to, that's a change.
+                self.has_new_knowledge.set(true);
+            }
             true
         } else {
             false
