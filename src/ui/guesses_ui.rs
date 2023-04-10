@@ -111,15 +111,15 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
         let window_state = WindowState::new(&self.window);
 
         window_state.set_color(color_for_knowledge(guess_ch.knowledge()));
-        _ = self.window.printw(style.top);
-        _ = self.window.mvprintw(
+        _ = self.window.addstr(style.top);
+        _ = self.window.mvaddstr(
             window_state.orig_y + 1,
             window_state.orig_x,
             format!("{}{}{}", style.vert, guessed_char, style.vert),
         );
         _ = self
             .window
-            .mvprintw(window_state.orig_y + 2, window_state.orig_x, style.bot);
+            .mvaddstr(window_state.orig_y + 2, window_state.orig_x, style.bot);
     }
 
     fn draw_active_marker(&self) {

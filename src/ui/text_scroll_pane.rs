@@ -100,8 +100,8 @@ impl TextScroll {
         match use_title {
             None => {
                 self.window.mvaddstr(0, 0, "┌");
-                self.window.printw(&main_pane_h_bar);
-                self.window.printw("┬─┐");
+                self.window.addstr(&main_pane_h_bar);
+                self.window.addstr("┬─┐");
             }
             Some(title) => {
                 let title_width = (max_x - 2) as usize;
@@ -113,9 +113,9 @@ impl TextScroll {
                     Cow::Owned(truncated)
                 };
                 self.window.mvaddstr(0, 0, "╭");
-                self.window.printw(&main_pane_h_bar);
-                self.window.printw("──");
-                self.window.printw("╮");
+                self.window.addstr(&main_pane_h_bar);
+                self.window.addstr("──");
+                self.window.addstr("╮");
                 // main_pain_width is the total width minus 4. We don't lose any space from the
                 // scroll bar for the title, but we still want total width minus 4: 1 on each side
                 // for the vertical bars, and then 1 each on each side for padding.
@@ -123,8 +123,8 @@ impl TextScroll {
                 self.window
                     .mvaddstr(1, 0, format!("│{:<title_width$}│", title_truncated));
                 self.window.mvaddstr(2, 0, "┝");
-                self.window.printw(rep_str('━', main_pane_width_usize));
-                self.window.printw("┯━┥");
+                self.window.addstr(rep_str('━', main_pane_width_usize));
+                self.window.addstr("┯━┥");
             }
         };
         let first_body_row = self.window.get_cur_y();
@@ -186,8 +186,8 @@ impl TextScroll {
         }
         // footer
         self.window.mvaddstr(max_y - 1, 0, "└");
-        self.window.printw(&main_pane_h_bar);
-        self.window.printw("┴─┘");
+        self.window.addstr(&main_pane_h_bar);
+        self.window.addstr("┴─┘");
     }
 }
 
