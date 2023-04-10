@@ -10,13 +10,13 @@ use std::rc::Rc;
 
 pub struct AnalyzersUI<const N: usize> {
     output: TextScroll,
-    analyzers: Vec<Analyzer<N>>,
+    analyzers: Vec<Box<dyn Analyzer<N>>>,
     active_analyzer: usize,
     previous_words: Rc<WordList<N>>,
 }
 
 impl<const N: usize> AnalyzersUI<N> {
-    pub fn new(output: TextScroll, analyzers: Vec<Analyzer<N>>) -> Self {
+    pub fn new(output: TextScroll, analyzers: Vec<Box<dyn Analyzer<N>>>) -> Self {
         AnalyzersUI {
             output,
             analyzers,
@@ -36,8 +36,8 @@ impl<'a, const N: usize> AnalyzersUI<N> {
         let Some(analyzer) = self.analyzers.get(self.active_analyzer) else {
             return
         };
-        self.output.set_title(&analyzer.name);
-        let mut scored = (analyzer.func)(self.previous_words.deref());
+        self.output.set_title(&analyzer.name());
+        let mut scored = analyzer.analyze(self.previous_words.deref());
         scored.sort();
         ScoredWord::normalize_scores(&mut scored);
         let texts: Vec<String> = scored
@@ -49,10 +49,10 @@ impl<'a, const N: usize> AnalyzersUI<N> {
 }
 
 impl<const N: usize> Widget for AnalyzersUI<N> {
-    fn title(&self) -> Option<&str> {
+    fn title(&self) -> Option<String> {
         self.analyzers
             .get(self.active_analyzer)
-            .map(|a| &a.name as &str)
+            .map(|a| a.name().to_string())
     }
 
     fn set_active(&mut self, _active: bool) {

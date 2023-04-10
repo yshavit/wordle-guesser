@@ -52,8 +52,8 @@ impl TextScroll {
 }
 
 impl Widget for TextScroll {
-    fn title(&self) -> Option<&str> {
-        (&self.title).as_ref().map(|s| s as &str)
+    fn title(&self) -> Option<String> {
+        (&self.title).as_ref().map(|s| s.to_string())
     }
 
     fn set_active(&mut self, _active: bool) {

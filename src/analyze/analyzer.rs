@@ -1,25 +1,18 @@
-use crate::analyze::{scored_chars, words_by_freq};
 use crate::word_list::WordList;
 use std::cmp::Ordering;
+use crate::analyze::scored_chars::CharScorer;
+use crate::analyze::words_by_freq::WordsByFrequency;
 
-pub struct Analyzer<const N: usize> {
-    pub name: String,
-    pub func: for<'a> fn(&'a WordList<N>) -> Vec<ScoredWord<'a>>,
+pub trait Analyzer<const N: usize> {
+    fn name(&self) -> String;
+    fn analyze<'a>(&self, words_list: &'a WordList<N>) -> Vec<ScoredWord<'a>>;
 }
 
-impl<const N: usize> Analyzer<N> {
-    pub fn standard_suite() -> Vec<Analyzer<N>> {
-        vec![
-            Analyzer {
-                name: "Scored Words".to_string(),
-                func: |wl| scored_chars::analyze(wl),
-            },
-            Analyzer {
-                name: "Words by frequency".to_string(),
-                func: |wl: &WordList<N>| words_by_freq::words_by_frequency(wl),
-            },
-        ]
-    }
+pub fn standard_suite<const N: usize>() -> Vec<Box<dyn Analyzer<N>>>{
+    vec![
+        Box::new(CharScorer{}),
+        Box::new(WordsByFrequency{}),
+    ]
 }
 
 #[derive(PartialEq)]

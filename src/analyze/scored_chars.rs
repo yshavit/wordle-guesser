@@ -1,18 +1,26 @@
-use crate::analyze::analyzer::ScoredWord;
+use crate::analyze::analyzer::{Analyzer, ScoredWord};
 use crate::analyze::char_stats::CharCounts;
 use crate::analyze::util;
 use crate::word_list::WordList;
 use std::collections::HashMap;
 
-pub struct ScoredChars<'a, 'b, const N: usize> {
-    counts: &'a CharCounts<N>,
-    words_list: &'b WordList<N>,
+pub struct CharScorer<const N: usize> {}
+
+impl<const N: usize> Analyzer<N> for CharScorer<N> {
+    fn name(&self) -> String {
+        "Scored Chars".to_string()
+    }
+
+    fn analyze<'a>(&self, words_list: &'a WordList<N>) -> Vec<ScoredWord<'a>> {
+        let char_counts = CharCounts::new(words_list);
+        let scorer = ScoredChars::new(&words_list, &char_counts);
+        scorer.all_word_scores()
+    }
 }
 
-pub fn analyze<const N: usize>(words_list: &WordList<N>) -> Vec<ScoredWord> {
-    let char_counts = CharCounts::new(words_list);
-    let scorer = ScoredChars::new(&words_list, &char_counts);
-    scorer.all_word_scores()
+struct ScoredChars<'a, 'b, const N: usize> {
+    counts: &'a CharCounts<N>,
+    words_list: &'b WordList<N>,
 }
 
 impl<'a, 'b, const N: usize> ScoredChars<'a, 'b, N> {
@@ -48,7 +56,7 @@ impl<'a, 'b, const N: usize> ScoredChars<'a, 'b, N> {
         result
     }
 
-    pub fn all_word_scores(&self) -> Vec<ScoredWord<'b>> {
+    fn all_word_scores(&self) -> Vec<ScoredWord<'b>> {
         let all_words = self.words_list.words();
         let all_char_scores = self.all_char_scores();
 

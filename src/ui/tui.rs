@@ -1,4 +1,4 @@
-use crate::analyze::analyzer::Analyzer;
+use crate::analyze::analyzer;
 use crate::ui::analyzers_ui::AnalyzersUI;
 use crate::ui::guesses_ui::GuessesUI;
 use crate::ui::text_scroll_pane::TextScroll;
@@ -27,7 +27,7 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
 
         let mut analyzers_ui = AnalyzersUI::new(
             self.create_text_scroll(None, 30, 0, 34),
-            Analyzer::standard_suite(),
+            analyzer::standard_suite(),
         );
 
         loop {

@@ -11,7 +11,7 @@ use std::ops::DerefMut;
 pub struct AutoGuesser<const N: usize, const R: usize> {
     pub answer_words: Vec<String>,
     pub words_list: WordList<N>,
-    pub analyzers: Vec<Analyzer<N>>,
+    pub analyzers: Vec<Box<dyn Analyzer<N>>>,
 }
 
 pub enum GuessResult {
@@ -38,9 +38,9 @@ impl<const N: usize, const R: usize> AutoGuesser<N, R> {
             }
             let mut results_by_analyzer = Vec::with_capacity(self.analyzers.len());
             for analyzer in &self.analyzers {
-                let result = Self::guess_one(&self.words_list, &answer, analyzer);
+                let result = Self::guess_one(&self.words_list, &answer, analyzer.as_ref());
                 results_by_analyzer.push(AnalyzerGuessResult {
-                    name: analyzer.name.to_string(), // TODO can borrow, with some lifetime trickery
+                    name: analyzer.name().to_string(), // TODO can borrow, with some lifetime trickery
                     result,
                 });
             }
@@ -55,7 +55,7 @@ impl<const N: usize, const R: usize> AutoGuesser<N, R> {
     pub fn guess_one(
         words_list: &WordList<N>,
         answer: &str,
-        analyzer: &Analyzer<N>,
+        analyzer: &dyn Analyzer<N>,
     ) -> GuessResult {
         let mut grid = GuessGrid::<N, R>::new();
         let mut guesses = Vec::with_capacity(R);
@@ -63,7 +63,7 @@ impl<const N: usize, const R: usize> AutoGuesser<N, R> {
         let answer_upper = answer.to_ascii_uppercase();
         for guess_num in 0..R {
             possible_words.filter(&KnownWordConstraints::from_grid(&grid));
-            let mut scores: Vec<ScoredWord> = (analyzer.func)(&possible_words);
+            let mut scores: Vec<ScoredWord> = analyzer.analyze(&possible_words);
             scores.sort();
             let Some(&ScoredWord{word: best_guess, ..}) = scores.first() else {
                 return Failure;

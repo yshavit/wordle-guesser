@@ -51,7 +51,7 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
 }
 
 impl<'a, const N: usize, const R: usize> Widget for GuessesUI<N, R> {
-    fn title(&self) -> Option<&str> {
+    fn title(&self) -> Option<String> {
         None
     }
 

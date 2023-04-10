@@ -1,5 +1,5 @@
 use std::env;
-use wordlehelper::analyze::analyzer::Analyzer;
+use wordlehelper::analyze::analyzer;
 use wordlehelper::analyze::auto_guesser::{AutoGuesser, GuessResult};
 use wordlehelper::ui::tui::MainWindow;
 use wordlehelper::word_list::WordList;
@@ -13,7 +13,7 @@ fn main() {
         let auto_guesser: AutoGuesser<5, 6> = AutoGuesser {
             answer_words: try_words,
             words_list: WordList::get_embedded(10_000),
-            analyzers: Analyzer::standard_suite(),
+            analyzers: analyzer::standard_suite(),
         };
         for result in auto_guesser.guess_all() {
             println!("{}:", result.answer);
