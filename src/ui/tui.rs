@@ -53,7 +53,6 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
                         }
                     }
                 };
-
             }
         }
     }
