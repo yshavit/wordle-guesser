@@ -38,7 +38,7 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
             let mut maybe_input = self.get_input();
             let mut widgets: Vec<&mut dyn Widget> = vec![(&mut guesses_ui), (&mut analyzers_ui)];
 
-            while let Some(input) = maybe_input {
+            if let Some(input) = maybe_input {
                 match input {
                     Input::Character(c) if c == '\x03' => {
                         // ctrl-c
@@ -53,6 +53,7 @@ impl<const N: usize, const R: usize> MainWindow<N, R> {
                         }
                     }
                 };
+
             }
         }
     }
