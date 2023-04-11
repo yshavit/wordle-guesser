@@ -1,3 +1,4 @@
+use crate::analyze::char_freq::CharFrequencies;
 use crate::analyze::position_chars::CharPositionScorer;
 use crate::analyze::scored_chars::CharScorer;
 use crate::analyze::words_by_freq::WordsByFrequency;
@@ -11,6 +12,7 @@ pub trait Analyzer<const N: usize> {
 
 pub fn standard_suite<const N: usize>() -> Vec<Box<dyn Analyzer<N>>> {
     vec![
+        Box::new(CharFrequencies {}),
         Box::new(CharPositionScorer {}),
         Box::new(CharScorer {
             double_count_freq: false,
