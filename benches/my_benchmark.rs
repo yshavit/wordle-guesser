@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput, BatchSize};
 use wordlehelper::analyze::analyzer;
 use wordlehelper::guess::guesses::GuessGrid;
 use wordlehelper::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};
@@ -19,7 +19,7 @@ fn bench_analyzers(c: &mut Criterion) {
 fn bench_filter(c: &mut Criterion) {
     let mut group = c.benchmark_group("filter");
 
-    for size in [10, 100, 1_000, 2_000, 5_000, 10_000] {
+    for size in [10, 100, 1_000, 2_000, 2_500, 5_000] {
         group.throughput(Throughput::Elements(size));
         let words_5c: WordList<5> = WordList::get_embedded_std();
         let mut grid = GuessGrid::<5, 1>::new();
@@ -37,15 +37,29 @@ fn bench_filter(c: &mut Criterion) {
             ch_guess.set_knowledge(known);
         }
         group.bench_with_input(
-            BenchmarkId::from_parameter(size),
-            &(words_5c, &grid),
-            |b, (words, grid)| {
+            BenchmarkId::new("filter_preview", size),
+            &(&words_5c, &grid),
+            |b, &(words, grid)| {
                 b.iter(|| {
                     words
                         .filter_preview(&KnownWordConstraints::from_grid(grid))
                         .words()
                         .count()
                 })
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::new("filter", size),
+            &(words_5c, grid),
+            |b, (words, grid)| {
+                b.iter_batched(
+                    || words.clone(),
+                    |mut to_filter| {
+                        to_filter.filter(&KnownWordConstraints::from_grid(grid));
+                        to_filter.words().count()
+                    },
+                    BatchSize::SmallInput,
+                );
             },
         );
     }
