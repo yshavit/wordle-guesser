@@ -19,19 +19,51 @@ The "four 456" line is omitted because it doesn't have 5 chars, and the "fours 1
 
 import sys
 
-word_5char_freqs = []
+word_5char_freqs = {}
 words_4char_with_s = set()
+words_6char_with_s = {}
+words_7char_with_es = {}
+words_8char_with_ies = {}
+
+
+def add_to(m, k, v):
+    m[k] = m.get(k, 0) + int(v)
+
+
+def find_plural(m, word):
+    result = m.get(word, 0)
+    # if result:
+    #     print(f'found plural: {word}', file=sys.stderr)
+    return result
+
+
 
 for line in sys.stdin:
     line = line.strip()
     word, freq = line.split("\t")
-    if len(word) == 5:
-        word_5char_freqs.append((word, freq))
-    elif len(word) == 4:
+    word_len = len(word)
+    if word_len == 5:
+        add_to(word_5char_freqs, word, freq)
+    elif word_len == 4:
         words_4char_with_s.add(word + 's')
+    elif word_len == 6 and word.endswith('s'):
+        add_to(words_6char_with_s, word, freq)
+    elif word_len == 7 and word.endswith('es'):
+        add_to(words_7char_with_es, word, freq)
 
-for word, freq in word_5char_freqs:
-    if word not in words_4char_with_s:
-        print(f'{word}\t{freq}')
+# now copy them over to a [(word, freq)], editing as you go
+out_pairs = []
+for word, freq in word_5char_freqs.items():
+    if word in words_4char_with_s:
+        continue
+    freq += find_plural(words_6char_with_s, word + 's')
+    freq += find_plural(words_7char_with_es, word + 'es')
+    if word.endswith('y'):
+        freq += find_plural(words_8char_with_ies, word[:-1] + 'ies')
+    out_pairs.append((word, freq))
+
+out_pairs.sort(key=lambda x: x[1], reverse=True)
+for word, freq in out_pairs:
+    print(f'{word}\t{freq}')
 
 
