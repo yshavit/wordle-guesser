@@ -28,7 +28,7 @@ impl<const N: usize> WordList<N> {
     }
 
     pub fn get_embedded_std() -> Self {
-        Self::get_embedded(7_500)
+        Self::get_embedded(10_000)
     }
 
     pub fn get_embedded(limit: usize) -> Self {
