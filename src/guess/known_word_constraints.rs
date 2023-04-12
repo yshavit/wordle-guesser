@@ -17,9 +17,10 @@ impl Default for CharKnowledge {
     }
 }
 
+#[derive(PartialEq, Eq, Debug)]
 pub struct KnownWordConstraints<const N: usize> {
     fully_known: [Option<char>; N],
-    wrong_positions: Vec<HashSet<char>>,
+    wrong_positions: [HashSet<char>; N],
     missing: HashSet<char>,
     letters_count: KnowledgePerLetter,
 }
@@ -59,16 +60,12 @@ impl<const N: usize> KnownWordConstraints<N> {
     }
 
     pub fn empty() -> Self {
-        let mut result = KnownWordConstraints {
+        KnownWordConstraints {
             fully_known: [None; N],
-            wrong_positions: Vec::with_capacity(N), // TODO make this into an array?
+            wrong_positions: [(); N].map(|_| HashSet::default()),
             missing: HashSet::new(),
             letters_count: KnowledgePerLetter::new(N),
-        };
-        for _ in 0..N {
-            result.wrong_positions.push(HashSet::new());
         }
-        result
     }
 
     pub fn from_grid<const R: usize>(grid: &GuessGrid<N, R>) -> Self {
@@ -110,12 +107,13 @@ impl<const N: usize> KnownWordConstraints<N> {
 ///
 /// For example, if we guessed `F O O B R`, and got a "wrong position" for the first `O` but a
 /// "missing" for the second `O`, then we know that `LetterCount { at_least: 1, no_more_than: 1 }`.
-#[derive(Default)]
+#[derive(Default, PartialEq, Eq, Debug)]
 struct LetterKnowledge {
     at_least: usize,
     no_more_than: Option<usize>,
 }
 
+#[derive(Default, PartialEq, Eq, Debug)]
 struct KnowledgePerLetter(HashMap<char, LetterKnowledge>);
 
 impl KnowledgePerLetter {
@@ -172,6 +170,161 @@ impl KnowledgePerLetter {
             }
             my_count.at_least = at_least;
             my_count.no_more_than = no_more_than;
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::guess::guesses::{GuessGrid, GuessStr};
+    use std::collections::HashMap;
+
+    #[test]
+    fn create_knowledge_per_letter() {
+        struct Case<const N: usize> {
+            given: [(char, CharKnowledge); N],
+            expect: HashMap<char, LetterKnowledge>,
+        }
+        let cases = vec![
+            Case {
+                given: [
+                    ('I', CharKnowledge::Missing),
+                    ('R', CharKnowledge::Missing),
+                    ('A', CharKnowledge::Correct),
+                    ('T', CharKnowledge::Missing),
+                    ('E', CharKnowledge::Missing),
+                ],
+                #[rustfmt::skip]
+                expect: vec![
+                    ('I', LetterKnowledge { at_least: 0, no_more_than: Some(0) }),
+                    ('R', LetterKnowledge { at_least: 0, no_more_than: Some(0) }),
+                    ('A', LetterKnowledge { at_least: 1, no_more_than: None    }),
+                    ('T', LetterKnowledge { at_least: 0, no_more_than: Some(0) }),
+                    ('E', LetterKnowledge { at_least: 0, no_more_than: Some(0) }),
+                ]
+                .into_iter()
+                .collect(),
+            },
+            Case {
+                given: [
+                    ('A', CharKnowledge::Missing),
+                    ('B', CharKnowledge::WrongPosition),
+                    ('C', CharKnowledge::WrongPosition),
+                    ('B', CharKnowledge::Correct),
+                    ('C', CharKnowledge::Missing),
+                ],
+                #[rustfmt::skip]
+                expect: vec![
+                    ('A', LetterKnowledge { at_least: 0, no_more_than: Some(0) }),
+                    ('B', LetterKnowledge { at_least: 2, no_more_than: None    }),
+                    ('C', LetterKnowledge { at_least: 1, no_more_than: Some(1) }),
+                ]
+                .into_iter()
+                .collect(),
+            },
+        ];
+
+        for case in cases {
+            let mut guess_str: GuessStr<5> = GuessStr::new();
+            write_chars(&mut guess_str, case.given);
+
+            let expect = KnowledgePerLetter(case.expect);
+            let actual = KnowledgePerLetter::from(&guess_str);
+
+            assert_eq!(expect, actual);
+        }
+    }
+
+    #[test]
+    fn create_known_word_constraints() {
+        let mut grid: GuessGrid<5, 6> = GuessGrid::new();
+        write_chars(
+            grid.guess_mut(0),
+            [
+                ('I', CharKnowledge::Missing),
+                ('R', CharKnowledge::Missing),
+                ('A', CharKnowledge::Correct),
+                ('T', CharKnowledge::Missing),
+                ('E', CharKnowledge::Missing),
+            ],
+        );
+        write_chars(
+            grid.guess_mut(1),
+            [
+                ('C', CharKnowledge::Missing),
+                ('L', CharKnowledge::WrongPosition),
+                ('A', CharKnowledge::Correct),
+                ('S', CharKnowledge::Missing),
+                ('H', CharKnowledge::Missing),
+            ],
+        );
+
+        let actual = KnownWordConstraints::from_grid(&grid);
+
+        let expected = KnownWordConstraints {
+            fully_known: [None, None, Some('A'), None, None],
+            wrong_positions: [
+                HashSet::new(),
+                HashSet::from(['L']),
+                HashSet::new(),
+                HashSet::new(),
+                HashSet::new(),
+            ],
+            missing: HashSet::from(['I', 'R', 'T', 'E', 'C', 'S', 'H']),
+            #[rustfmt::skip]
+            letters_count: KnowledgePerLetter(vec![
+                ('I', LetterKnowledge{at_least: 0, no_more_than: Some(0) }),
+                ('R', LetterKnowledge{at_least: 0, no_more_than: Some(0) }),
+                ('A', LetterKnowledge{at_least: 1, no_more_than: None }),
+                ('T', LetterKnowledge{at_least: 0, no_more_than: Some(0) }),
+                ('E', LetterKnowledge{at_least: 0, no_more_than: Some(0) }),
+                ('C', LetterKnowledge{at_least: 0, no_more_than: Some(0) }),
+                ('L', LetterKnowledge{at_least: 1, no_more_than: None }),
+                ('S', LetterKnowledge{at_least: 0, no_more_than: Some(0) }),
+                ('H', LetterKnowledge{at_least: 0, no_more_than: Some(0) }),
+            ].into_iter().collect()),
+        };
+
+        // These are covered by the big "assert_eq!(expected, actual)" at the end, but here's a more
+        // granular breakdown.
+        assert_eq!(expected.fully_known, actual.fully_known);
+        assert_eq!(
+            sorted_vec(&expected.fully_known),
+            sorted_vec(&actual.fully_known)
+        );
+        assert_eq!(sorted_vec(&expected.missing), sorted_vec(&actual.missing));
+        assert_eq!(
+            entries(&expected.letters_count),
+            entries(&actual.letters_count)
+        );
+
+        assert_eq!(expected, actual);
+
+        assert!(actual.is_word_possible("QUALM"))
+    }
+
+    fn sorted_vec<I, T>(iterable: I) -> Vec<T>
+    where
+        I: IntoIterator<Item = T>,
+        T: Ord,
+    {
+        let mut vec: Vec<T> = iterable.into_iter().collect();
+        vec.sort();
+        vec
+    }
+
+    fn entries(knowledge_per_letter: &KnowledgePerLetter) -> Vec<(&char, &LetterKnowledge)> {
+        let mut vec: Vec<(&char, &LetterKnowledge)> = knowledge_per_letter.0.iter().collect();
+        vec.sort_by_key(|(ch, _)| *ch);
+        vec
+    }
+
+    fn write_chars<const N: usize>(to: &mut GuessStr<N>, chars: [(char, CharKnowledge); N]) {
+        for (idx, (ch, kn)) in chars.into_iter().enumerate() {
+            let guess_ch = to.guess_mut(idx);
+            guess_ch.set_ch(ch);
+            guess_ch.set_knowledge(kn);
         }
     }
 }

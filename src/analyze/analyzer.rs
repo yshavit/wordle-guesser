@@ -1,6 +1,7 @@
 use crate::analyze::char_freq::CharFrequencies;
 use crate::analyze::position_chars::CharPositionScorer;
 use crate::analyze::scored_chars::CharScorer;
+use crate::analyze::simple::AlphabeticalOrder;
 use crate::analyze::words_by_freq::WordsByFrequency;
 use crate::word_list::WordList;
 use std::cmp::Ordering;
@@ -13,7 +14,8 @@ pub trait Analyzer<const N: usize> {
 pub fn standard_suite<const N: usize>() -> Vec<Box<dyn Analyzer<N>>> {
     vec![
         Box::new(CharFrequencies {}),
-        Box::new(CharPositionScorer {}),
+        Box::new(AlphabeticalOrder { ascending: true }),
+        Box::new(AlphabeticalOrder { ascending: false }),
         Box::new(CharScorer {
             double_count_freq: false,
         }),
@@ -21,6 +23,7 @@ pub fn standard_suite<const N: usize>() -> Vec<Box<dyn Analyzer<N>>> {
             double_count_freq: true,
         }),
         Box::new(WordsByFrequency {}),
+        Box::new(CharPositionScorer {}),
     ]
 }
 

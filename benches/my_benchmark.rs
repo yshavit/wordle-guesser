@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput, BatchSize};
+use criterion::{criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion, Throughput};
 use wordlehelper::analyze::analyzer;
 use wordlehelper::guess::guesses::GuessGrid;
 use wordlehelper::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};

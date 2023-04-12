@@ -3,6 +3,7 @@ use crate::analyze::util::uniq_chars;
 use crate::word_list::{WordFreq, WordList};
 use std::collections::HashMap;
 
+// TODO move to simple.rs
 pub struct CharFrequencies {}
 
 impl<const N: usize> Analyzer<N> for CharFrequencies {

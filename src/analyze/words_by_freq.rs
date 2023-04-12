@@ -1,6 +1,7 @@
 use crate::analyze::analyzer::{Analyzer, ScoredWord};
 use crate::word_list::{WordFreq, WordList};
 
+// TODO move to simple.rs
 pub struct WordsByFrequency {}
 
 impl<const N: usize> Analyzer<N> for WordsByFrequency {
