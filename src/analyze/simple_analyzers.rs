@@ -1,7 +1,7 @@
-use std::collections::HashMap;
 use crate::analyze::analyzer::{Analyzer, ScoredWord};
 use crate::analyze::util::uniq_chars;
 use crate::word_list::{WordFreq, WordList};
+use std::collections::HashMap;
 
 pub struct AlphabeticalOrder {
     pub ascending: bool,

@@ -74,7 +74,8 @@ impl<const N: usize> GuessStr<N> {
     }
 
     fn is_fully_filled(&self) -> bool {
-        self.chars().all(|&GuessChar{ch, knowledge}| ch.is_some() && knowledge != CharKnowledge::Unknown)
+        self.chars()
+            .all(|&GuessChar { ch, knowledge }| ch.is_some() && knowledge != CharKnowledge::Unknown)
     }
 }
 

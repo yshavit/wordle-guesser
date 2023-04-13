@@ -105,7 +105,14 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             }
             self.window.mv(orig_y, orig_x);
         }
-        self.draw_active_marker()
+        let _window_state = if self.fully_guessed() {
+            let window_state = WindowState::new(&self.window);
+            window_state.set_color(Color::Good);
+            Some(window_state)
+        } else {
+            None
+        };
+        self.draw_active_marker();
     }
 
     fn draw_guess_box(&self, guess_ch: &GuessChar, style: &BoxStyle) {
@@ -129,6 +136,12 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             .mvaddstr(3 * (self.active_row as i32) + 1, 1, "➤");
     }
 
+    fn fully_guessed(&self) -> bool {
+        self.grid.guesses()[self.active_row]
+            .chars()
+            .all(|ch| ch.knowledge() == CharKnowledge::Correct)
+    }
+
     fn handle_newline(&mut self) {
         let active_row = &self.grid.guesses()[self.active_row];
         if active_row
@@ -139,7 +152,7 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             self.report_error();
         } else if self.active_row + 1 >= N {
             self.report_error();
-        } else {
+        } else if !self.fully_guessed() {
             let window_state = WindowState::new(&self.window);
             // Hide the current active marker
             window_state.set_color(Color::Hidden);
@@ -154,7 +167,8 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             self.active_col = 0;
 
             // Reify the possible words
-            self.possible_words.filter(&KnownWordConstraints::from_grid(&self.grid));
+            self.possible_words
+                .filter(&KnownWordConstraints::from_grid(&self.grid));
 
             // Get the current inference, and enter it in
             self.current_row_inference = self.grid.known_chars();
@@ -202,7 +216,9 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
         if guess_str.guess_mut(self.active_col).set_ch(ch) {
             let inferred = &self.current_row_inference[self.active_col];
             if inferred == &guess_str.guesses()[self.active_col].ch() {
-                guess_str.guess_mut(self.active_col).set_knowledge(CharKnowledge::Correct);
+                guess_str
+                    .guess_mut(self.active_col)
+                    .set_knowledge(CharKnowledge::Correct);
             }
             self.move_active_ch(true);
             if had_knowledge_before {
