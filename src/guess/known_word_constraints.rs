@@ -1,6 +1,7 @@
-use crate::guess::guesses::{GuessGrid, GuessStr};
+use crate::guess::guesses::{GuessChar, GuessGrid, GuessStr};
 use std::cmp::{max, min};
 use std::collections::{HashMap, HashSet};
+use std::str::Chars;
 use strum::{EnumCount, FromRepr};
 
 #[derive(Copy, Clone, PartialEq, Eq, EnumCount, FromRepr)]
@@ -26,9 +27,15 @@ pub struct KnownWordConstraints<const N: usize> {
 }
 
 impl<const N: usize> KnownWordConstraints<N> {
-    pub fn is_word_possible(&self, word: &str) -> bool {
+    pub fn is_word_possible<S, I>(&self, word: S)-> bool
+        where S: ToOptionChars<I>,
+              I: Iterator<Item = Option<char>>,
+        {
         // First, check all the positional info.
-        for (idx, word_ch) in word.chars().enumerate() {
+        for (idx, word_ch_opt) in word.to_option_chars().enumerate() {
+            let Some(word_ch) = word_ch_opt else {
+                continue;
+            };
             // If we know this idx has to contain known_ch, but it doesn't, then return false.
             if let Some(known_ch) = self.fully_known[idx] {
                 if word_ch != known_ch {
@@ -42,7 +49,10 @@ impl<const N: usize> KnownWordConstraints<N> {
         }
         // Now the counts
         let mut chars_count = HashMap::with_capacity(N);
-        for word_char in word.chars() {
+        for word_char_opt in word.to_option_chars() {
+            let Some(word_char) = word_char_opt else {
+                continue;
+            };
             *chars_count.entry(word_char).or_insert(0) += 1;
         }
         for (known_ch, known_count) in self.letters_count.0.iter() {
@@ -69,14 +79,18 @@ impl<const N: usize> KnownWordConstraints<N> {
     }
 
     pub fn from_grid<const R: usize>(grid: &GuessGrid<N, R>) -> Self {
+        Self::from_grid_partial(grid, R)
+    }
+
+    pub fn from_grid_partial<const R: usize>(grid: &GuessGrid<N, R>, n_rows: usize) -> Self {
         let mut result = Self::empty();
 
-        for row in grid.rows() {
+        for row in grid.rows().take(n_rows) {
             result.add_row(row);
             let row_counts = KnowledgePerLetter::from(row);
             result.letters_count.add(&row_counts);
         }
-        grid.rows().for_each(|r| result.add_row(r));
+        grid.rows().take(n_rows).for_each(|r| result.add_row(r));
 
         return result;
     }
@@ -97,6 +111,29 @@ impl<const N: usize> KnownWordConstraints<N> {
                 CharKnowledge::Unknown => continue,
             };
         }
+    }
+}
+
+pub trait ToOptionChars<I> where I: Iterator<Item = Option<char>> {
+    fn to_option_chars(&self) -> I;
+}
+
+impl<'a> ToOptionChars<core::iter::Map<Chars<'a>, fn(char) -> Option<char>>> for &'a str {
+    fn to_option_chars(&self) -> core::iter::Map<Chars<'a>, fn(char) -> Option<char>> {
+        self.chars().map(|c| Some(c))
+    }
+}
+
+impl<'a> ToOptionChars<core::iter::Map<Chars<'a>, fn(char) -> Option<char>>> for &'a String {
+    fn to_option_chars(&self) -> core::iter::Map<Chars<'a>, fn(char) -> Option<char>> {
+        (self as &str).to_option_chars()
+    }
+}
+
+impl<'a, const N: usize> ToOptionChars<std::iter::Map<std::slice::Iter<'a, GuessChar>, fn(&GuessChar) -> Option<char>>> for &'a GuessStr<N> {
+
+    fn to_option_chars(&self) -> std::iter::Map<std::slice::Iter<'a, GuessChar>, fn(&GuessChar) -> Option<char>> {
+        self.chars().map(|ch| ch.ch())
     }
 }
 
@@ -302,6 +339,29 @@ mod test {
         assert_eq!(expected, actual);
 
         assert!(actual.is_word_possible("QUALM"))
+    }
+
+    #[test]
+    fn is_word_possible_on_empty() {
+        let empty: KnownWordConstraints<5> = KnownWordConstraints::empty();
+        assert!(empty.is_word_possible("FARCE"))
+    }
+
+    #[test]
+    fn is_word_possible_on_partial_grid() {
+        let mut grid: GuessGrid<5, 6> = GuessGrid::new();
+        write_chars(
+            grid.guess_mut(0),
+            [
+                ('I', CharKnowledge::Missing),
+                ('R', CharKnowledge::WrongPosition),
+                ('A', CharKnowledge::Missing),
+                ('T', CharKnowledge::Missing),
+                ('E', CharKnowledge::Missing),
+            ],
+        );
+        let partial = KnownWordConstraints::from_grid_partial(&grid, 0);
+        assert!(partial.is_word_possible("IRATE"))
     }
 
     fn sorted_vec<I, T>(iterable: I) -> Vec<T>

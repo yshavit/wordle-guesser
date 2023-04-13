@@ -125,6 +125,11 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
     }
 
     fn draw_active_marker(&self) {
+        let current_word: String = self.grid.guesses()[self.active_row].chars().map(|ch| ch.ch().unwrap_or('\x00')).collect();
+        let window_state = WindowState::new(&self.window);
+        if !KnownWordConstraints::from_grid_partial(&self.grid, self.active_row).is_word_possible(&current_word) {
+            window_state.set_color(Color::Warning);
+        }
         self.window
             .mvaddstr(3 * (self.active_row as i32) + 1, 1, "➤");
     }
@@ -169,6 +174,11 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
         }
     }
 
+    fn mark_new_knowledge(&mut self) {
+        self.has_new_knowledge.set(true);
+        self.draw_active_marker();
+    }
+
     fn move_active_ch(&mut self, right: bool) {
         incr_usize(&mut self.active_col, N, right, WRAP);
     }
@@ -183,14 +193,14 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
         let next =
             CharKnowledge::from_repr(next_idx).expect(&format!("out of range for {}", next_idx));
         guess_ch.set_knowledge(next);
-        self.has_new_knowledge.set(true);
+        self.mark_new_knowledge();
     }
 
     fn unset_active_ch(&mut self) {
         let guess_str = &mut self.grid.guess_mut(self.active_row);
         let old = guess_str.guess_mut(self.active_col).unset_ch();
         match old {
-            Some(_) => self.has_new_knowledge.set(true),
+            Some(_) => self.mark_new_knowledge(),
             None => self.move_active_ch(false),
         }
     }
@@ -207,7 +217,7 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             self.move_active_ch(true);
             if had_knowledge_before {
                 // We don't have knowledge after set_ch, so if we used to, that's a change.
-                self.has_new_knowledge.set(true);
+                self.mark_new_knowledge();
             }
             true
         } else {
