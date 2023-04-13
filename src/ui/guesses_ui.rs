@@ -150,7 +150,7 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             .any(|c| c.knowledge() == CharKnowledge::Unknown)
         {
             self.report_error();
-        } else if self.active_row + 1 >= N {
+        } else if self.active_row + 1 > N {
             self.report_error();
         } else if !self.fully_guessed() {
             let window_state = WindowState::new(&self.window);
@@ -162,9 +162,6 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             self.active_row += 1;
             window_state.set_color(Color::StandardForeground);
             self.draw_active_marker();
-
-            // Set the active char on the current row to 0.
-            self.active_col = 0;
 
             // Reify the possible words
             self.possible_words
@@ -180,6 +177,14 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
                     cell.set_knowledge(CharKnowledge::Correct);
                 }
             }
+
+            // Set the active char on the current row to the first unknown char
+            self.active_col = active_row
+                .chars()
+                .enumerate()
+                .find(|e| e.1.knowledge() != CharKnowledge::Correct)
+                .map(|e| e.0)
+                .unwrap_or(0);
         }
     }
 
