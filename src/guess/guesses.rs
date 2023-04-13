@@ -41,6 +41,7 @@ impl GuessChar {
         true
     }
 
+    /// A row is filled out iff all of its chars are Some chars with non-Unknown knowledge.
     pub fn unset_ch(&mut self) -> Option<char> {
         let old = self.ch;
         self.ch = None;
@@ -71,6 +72,10 @@ impl<const N: usize> GuessStr<N> {
     pub fn guess_mut(&mut self, idx: usize) -> &mut GuessChar {
         &mut self.guesses[idx]
     }
+
+    fn is_fully_filled(&self) -> bool {
+        self.chars().all(|&GuessChar{ch, knowledge}| ch.is_some() && knowledge != CharKnowledge::Unknown)
+    }
 }
 
 impl<const N: usize> Default for GuessStr<N> {
@@ -100,6 +105,26 @@ impl<const N: usize, const R: usize> GuessGrid<N, R> {
 
     pub fn guess_mut(&mut self, idx: usize) -> &mut GuessStr<N> {
         &mut self.guesses[idx]
+    }
+
+    /// Gets a list of all known chars, by position. This does not intelligently handle conflicting
+    /// information (e.g., one row saying char 0 is 'A' and another saying it's 'B').
+    pub fn known_chars(&self) -> [Option<char>; N] {
+        let mut result = [None; N];
+
+        // For now, don't c
+        for row in self.rows() {
+            if !row.is_fully_filled() {
+                break;
+            }
+            for (idx, guess_ch) in row.chars().enumerate() {
+                if guess_ch.knowledge == CharKnowledge::Correct {
+                    result[idx] = guess_ch.ch;
+                }
+            }
+        }
+
+        result
     }
 }
 

@@ -19,6 +19,7 @@ pub struct GuessesUI<const N: usize, const R: usize> {
     active_col: usize,
     has_new_knowledge: Cell<bool>,
     possible_words: WordList<N>,
+    current_row_inference: [Option<char>; N],
 }
 
 impl<const N: usize, const R: usize> GuessesUI<N, R> {
@@ -32,6 +33,7 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             active_col: 0,
             has_new_knowledge: Cell::new(true),
             possible_words: WordList::get_embedded_std(),
+            current_row_inference: [None; N],
         };
         res.draw_guess_grid();
         res
@@ -152,8 +154,18 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             self.active_col = 0;
 
             // Reify the possible words
-            self.possible_words
-                .filter(&KnownWordConstraints::from_grid(&self.grid));
+            self.possible_words.filter(&KnownWordConstraints::from_grid(&self.grid));
+
+            // Get the current inference, and enter it in
+            self.current_row_inference = self.grid.known_chars();
+            let active_row = self.grid.guess_mut(self.active_row);
+            for (idx, inferred) in self.current_row_inference.iter().enumerate() {
+                if let Some(ch) = inferred {
+                    let cell = active_row.guess_mut(idx);
+                    cell.set_ch(*ch);
+                    cell.set_knowledge(CharKnowledge::Correct);
+                }
+            }
         }
     }
 
@@ -188,6 +200,10 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
         let had_knowledge_before =
             guess_str.guesses()[self.active_col].knowledge() != CharKnowledge::Unknown;
         if guess_str.guess_mut(self.active_col).set_ch(ch) {
+            let inferred = &self.current_row_inference[self.active_col];
+            if inferred == &guess_str.guesses()[self.active_col].ch() {
+                guess_str.guess_mut(self.active_col).set_knowledge(CharKnowledge::Correct);
+            }
             self.move_active_ch(true);
             if had_knowledge_before {
                 // We don't have knowledge after set_ch, so if we used to, that's a change.
