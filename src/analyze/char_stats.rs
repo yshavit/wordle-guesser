@@ -39,10 +39,6 @@ impl<const N: usize> CharCounts<N> {
         &self.word_count_by_char
     }
 
-    pub fn total_chars(&self) -> u32 {
-        self.total_chars
-    }
-
     pub fn words_count(&self) -> u32 {
         self.words_count
     }
