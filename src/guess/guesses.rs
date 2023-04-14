@@ -120,7 +120,6 @@ impl<const N: usize, const R: usize> GuessGrid<N, R> {
             }
             for (idx, guess_ch) in row.chars().enumerate() {
                 if guess_ch.knowledge == CharKnowledge::Correct {
-                    let x =guess_ch.ch;
                     result[idx] = guess_ch.ch;
                 }
             }
