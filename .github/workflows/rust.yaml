@@ -14,19 +14,17 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build
-      run: |
-        set -x
-        cargo build --verbose
+      run: cargo build --verbose
     - name: Run tests
-      run: |
-        set -x
-        cargo test --verbose
+      run: cargo test --verbose
   fmt:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: fmt check
-      run: |
-        set -x
-        cargo fmt --check | sed -E 's/Diff in (.*) at line ([0-9]+):/::error file=\1,line=\2,title:cargo fmt::bad formatting/g'
+      run: 
+        results="$(cargo fmt --check)"
+        exit_code="$?"
+        echo "$results" | sed -E 's/Diff in (.*) at line ([0-9]+):/::error file=\1,line=\2,title:cargo fmt::bad formatting/g'
+        exit "$exit_code"
 
