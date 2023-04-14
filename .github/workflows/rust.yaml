@@ -22,7 +22,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: fmt check
-      run: 
+      run: |
         results="$(cargo fmt --check)"
         exit_code="$?"
         echo "$results" | sed -E 's/Diff in (.*) at line ([0-9]+):/::error file=\1,line=\2,title:cargo fmt::bad formatting/g'
