@@ -21,10 +21,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: fmt check
+    - name: fmt --check
       run: |
-        results="$(cargo fmt --check)"
+        set +e # so that the subshell doesn't fail
+        text="$(cargo fmt --check)"
         exit_code="$?"
-        echo "$results" | sed -E 's/Diff in (.*) at line ([0-9]+):/::error file=\1,line=\2,title:cargo fmt::bad formatting/g'
+        echo "$text" | sed -E 's/Diff in (.*) at line ([0-9]+):/::error file=\1,line=\2,title:cargo fmt::bad formatting/g'
         exit "$exit_code"
-
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: cargo check
+      run: |
+        text="$(cargo check --message-format json)"
+        all_errs="$(echo "$text" | jq -r 'select(.message.rendered and (.message.spans | length) > 0) | .message | . as $msg | .spans[] | "::error file=\(.file_name),line=\(.line_start),endLine=\(.line_end),title=\($msg.level)::\($msg.message)\n\($msg.rendered)"')"
+        echo "$all_errs"
+        [[ -z "$all_errs" ]]
+        exit $?
