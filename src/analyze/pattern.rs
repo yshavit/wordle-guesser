@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashSet};
 use std::hash::{Hash, Hasher};
 use crate::analyze::analyzer::{Analyzer, ScoredWord};
 use crate::analyze::util;
@@ -31,20 +31,20 @@ impl<const N: usize> Analyzer<N> for PatternBasedAnalyzer<N> {
 
 impl<const N: usize> PatternBasedAnalyzer<N> {
     fn score_word(word: &str, all_words: &WordList<N>) -> f64 {
-        let mut cache = CharCountsCache::default();
         let mut patterns: HashSet<Pattern<N>> = HashSet::new();
         for WordFreq{word: if_answer, ..} in all_words.words() {
-            patterns.insert(Self::pattern(word, if_answer, &mut cache));
+            patterns.insert(Self::pattern(word, if_answer));
         }
         patterns.len() as f64
     }
 
-    fn pattern(guess: &str, answer: &str, char_counter: &mut CharCountsCache) -> Pattern<N> {
+    fn pattern(guess: &str, answer: &str) -> Pattern<N> {
         let mut result = Pattern {
             knowledge: [CharKnowledge::Missing; N],
         };
 
-        let mut answer_chars_count = char_counter.get(answer);
+
+        let mut answer_chars_count = util::chars_count(answer.chars());
 
         // first, all the ones in the right position
         let answer_chars: Vec<char> = answer.chars().collect();
@@ -81,24 +81,6 @@ impl<const N: usize> Hash for Pattern<N> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         for k in self.knowledge {
             state.write_usize(k as usize);
-        }
-    }
-}
-
-#[derive(Default)]
-struct CharCountsCache {
-    values: HashMap<String, HashMap<char, i32>>
-}
-
-impl CharCountsCache {
-    fn get(&mut self, word: &str) -> HashMap<char, i32> {
-        match self.values.get(word) {
-            Some(existing) => existing.clone(),
-            None => {
-                let new = util::chars_count(word.chars());
-                self.values.insert(word.to_string(), new.clone());
-                new.clone()
-            }
         }
     }
 }
