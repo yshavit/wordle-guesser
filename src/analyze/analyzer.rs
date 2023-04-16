@@ -13,7 +13,7 @@ pub trait Analyzer<const N: usize> {
 pub fn standard_suite<const N: usize>() -> Vec<Box<dyn Analyzer<N>>> {
     vec![
         Box::new(CharFrequencies {}),
-        Box::new(PatternBasedAnalyzer { limit: 1000, weighted: false }),
+        Box::new(PatternBasedAnalyzer { limit: 10000, weighted: false }),
         Box::new(AlphabeticalOrder { ascending: true }),
         Box::new(AlphabeticalOrder { ascending: false }),
         Box::new(CharScorer {

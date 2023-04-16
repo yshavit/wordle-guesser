@@ -3,10 +3,11 @@ use crate::analyze::auto_guesser::GuessResult::{Failure, Success};
 use crate::guess::guesses::{GuessGrid, GuessStr};
 use crate::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};
 use crate::word_list::WordList;
-use std::collections::hash_map::Entry;
+
+
 
 use crate::analyze::util;
-use std::ops::DerefMut;
+
 
 pub struct AutoGuesser<const N: usize, const R: usize> {
     pub answer_words: Vec<String>,
@@ -92,7 +93,7 @@ impl<const N: usize, const R: usize> AutoGuesser<N, R> {
             guess_ch.set_ch(guess_str_char);
             if guess_str_char == answer_chars[idx] {
                 guess_ch.set_knowledge(CharKnowledge::Correct);
-                *chars_count.entry(guess_str_char).or_insert(0).deref_mut() -= 1;
+                chars_count.decrement(guess_str_char);
             }
         }
         // Now, chars that might be in the wrong position
@@ -102,19 +103,13 @@ impl<const N: usize, const R: usize> AutoGuesser<N, R> {
             if guess_ch.knowledge() == CharKnowledge::Correct {
                 continue; // already handled above
             }
-            match chars_count.entry(guess_str_char) {
-                Entry::Occupied(mut entry) => {
-                    let count = entry.get_mut();
-                    if *count <= 0 {
-                        guess_ch.set_knowledge(CharKnowledge::Missing);
-                    } else if *count == 1 {
-                        guess_ch.set_knowledge(CharKnowledge::WrongPosition);
-                        entry.remove();
-                    } else {
-                        *count -= 1;
-                    }
+            if let Some(count) = chars_count.get_mut(guess_str_char) {
+                if *count <= 0 {
+                    guess_ch.set_knowledge(CharKnowledge::Missing);
+                } else {
+                    guess_ch.set_knowledge(CharKnowledge::WrongPosition);
+                    *count -= 1;
                 }
-                Entry::Vacant(_) => guess_ch.set_knowledge(CharKnowledge::Missing),
             }
         }
     }

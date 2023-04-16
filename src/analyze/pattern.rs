@@ -54,13 +54,13 @@ impl<const N: usize> PatternBasedAnalyzer<N> {
             };
             if &guess_ch == answer_ch {
                 result.knowledge[idx] = CharKnowledge::Correct;
-                *answer_chars_count.get_mut(&guess_ch).expect("missing char") -= 1;
+                answer_chars_count.decrement(guess_ch);
             }
         }
 
         // now all the ones in the wrong position
         for (idx, guess_ch) in guess.chars().enumerate() {
-            if let Some(remaining) = answer_chars_count.get_mut(&guess_ch) {
+            if let Some(remaining) = answer_chars_count.get_mut(guess_ch) {
                 if *remaining > 0 {
                     result.knowledge[idx] = CharKnowledge::WrongPosition;
                     *remaining -= 1;
