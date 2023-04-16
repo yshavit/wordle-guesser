@@ -3,6 +3,7 @@ use crate::analyze::scored_chars::CharScorer;
 use crate::analyze::simple_analyzers::{AlphabeticalOrder, CharFrequencies, WordFrequencies};
 use crate::word_list::WordList;
 use std::cmp::Ordering;
+use crate::analyze::pattern::PatternBasedAnalyzer;
 
 pub trait Analyzer<const N: usize> {
     fn name(&self) -> String;
@@ -22,6 +23,7 @@ pub fn standard_suite<const N: usize>() -> Vec<Box<dyn Analyzer<N>>> {
         }),
         Box::new(WordFrequencies {}),
         Box::new(CharPositionScorer {}),
+        Box::new(PatternBasedAnalyzer { limit: 10_000 }),
     ]
 }
 
