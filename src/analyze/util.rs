@@ -60,22 +60,27 @@ pub struct CharsSet {
 }
 
 impl CharsSet {
-    pub fn iter(&self) -> CharsIter {
-        CharsIter::new(&self.counts)
-    }
-
     pub fn contains(&self, ch: char) -> bool {
         self.counts.get(ch) > 0
     }
 }
 
-pub struct CharsIter<'a> {
-    counts: &'a CharsCount,
+impl IntoIterator for CharsSet {
+    type Item = char;
+    type IntoIter = CharsIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        CharsIter::new(self.counts)
+    }
+}
+
+pub struct CharsIter {
+    counts: CharsCount,
     next_idx: usize,
 }
 
-impl<'a> CharsIter<'a> {
-    fn new(counts: &'a CharsCount) -> Self {
+impl CharsIter {
+    fn new(counts: CharsCount) -> Self {
         let mut result = CharsIter {
             counts,
             next_idx: 0,
@@ -99,7 +104,7 @@ impl<'a> CharsIter<'a> {
 
 }
 
-impl<'a> Iterator for CharsIter<'a> {
+impl Iterator for CharsIter {
     type Item = char;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -124,7 +129,7 @@ mod test {
         assert!(!set.contains('a'));
         assert!(!set.contains('A'));
 
-        let mut iter = set.iter();
+        let mut iter = set.into_iter();
         assert_eq!(None, iter.next());
     }
 
@@ -135,7 +140,7 @@ mod test {
         assert!(set.contains('A'));
         assert!(set.contains('Z'));
 
-        let mut iter = set.iter();
+        let mut iter = set.into_iter();
 
         assert_eq!(Some('A'), iter.next());
         assert_eq!(Some('C'), iter.next());
