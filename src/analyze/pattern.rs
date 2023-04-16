@@ -32,27 +32,27 @@ impl<const N: usize> Analyzer<N> for PatternBasedAnalyzer<N> {
 impl<const N: usize> PatternBasedAnalyzer<N> {
     fn score_word(word: &str, all_words: &WordList<N>) -> f64 {
         let mut patterns: HashSet<Pattern<N>> = HashSet::new();
+        let mut answer_arr = ['\x00'; N];
         for WordFreq{word: if_answer, ..} in all_words.words() {
-            patterns.insert(Self::pattern(word, if_answer));
+            for (idx, ch) in if_answer.chars().enumerate() {
+                answer_arr[idx] = ch;
+            }
+            patterns.insert(Self::pattern(word, &answer_arr));
         }
         patterns.len() as f64
     }
 
-    fn pattern(guess: &str, answer: &str) -> Pattern<N> {
+    fn pattern(guess: &str, answer: &[char; N]) -> Pattern<N> {
         let mut result = Pattern {
             knowledge: [CharKnowledge::Missing; N],
         };
 
 
-        let mut answer_chars_count = util::chars_count(answer.chars());
+        let mut answer_chars_count = util::chars_count(answer.iter().map(|c| *c));
 
         // first, all the ones in the right position
-        let answer_chars: Vec<char> = answer.chars().collect();
         for (idx, guess_ch) in guess.chars().enumerate() {
-            let Some(answer_ch) = answer_chars.get(idx) else {
-                continue
-            };
-            if &guess_ch == answer_ch {
+            if guess_ch == answer[idx] {
                 result.knowledge[idx] = CharKnowledge::Correct;
                 answer_chars_count.decrement(guess_ch);
             }
