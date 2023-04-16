@@ -4,10 +4,7 @@ use crate::guess::guesses::{GuessGrid, GuessStr};
 use crate::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};
 use crate::word_list::WordList;
 
-
-
 use crate::analyze::util;
-
 
 pub struct AutoGuesser<const N: usize, const R: usize> {
     pub answer_words: Vec<String>,

@@ -1,5 +1,5 @@
 pub fn uniq_chars(word: &str) -> CharsSet {
-    CharsSet{
+    CharsSet {
         counts: chars_count(word.chars()),
     }
 }
@@ -25,7 +25,6 @@ pub struct CharsCount {
 }
 
 impl CharsCount {
-
     pub fn get(&self, ch: char) -> u32 {
         if !ch.is_ascii_alphabetic() {
             return 0;
@@ -101,7 +100,6 @@ impl CharsIter {
             self.next_idx += 1;
         }
     }
-
 }
 
 impl Iterator for CharsIter {
@@ -109,7 +107,7 @@ impl Iterator for CharsIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.next_idx >= NUM_CHARS {
-            return None
+            return None;
         }
         let result = (self.next_idx + A_USIZE) as u8 as char;
         self.next_idx += 1;
