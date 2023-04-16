@@ -6,13 +6,15 @@ use crate::guess::known_word_constraints::CharKnowledge;
 use crate::word_list::{WordFreq, WordList};
 
 pub struct PatternBasedAnalyzer<const N: usize> {
-    pub limit: usize
+    pub limit: usize,
+    pub weighted: bool,
 }
 
 /// An implementation of roughly what I think the WorldBot uses
 impl<const N: usize> Analyzer<N> for PatternBasedAnalyzer<N> {
     fn name(&self) -> String {
-        return "Pattern-Based".to_string();
+        let un_weighted = if self.weighted { "" } else { "un" };
+        format!("Pattern ({}, {}weighted)", self.limit, un_weighted)
     }
 
     fn analyze<'a>(&self, words_list: &'a WordList<N>) -> Vec<ScoredWord<'a>> {
