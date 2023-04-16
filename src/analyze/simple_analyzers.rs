@@ -49,7 +49,7 @@ impl<const N: usize> Analyzer<N> for CharFrequencies {
             .words()
             .map(|WordFreq { word, .. }| {
                 let score: u32 = uniq_chars(word)
-                    .into_iter()
+                    .iter()
                     .map(|c| chars_count.get(c))
                     .sum();
                 ScoredWord {

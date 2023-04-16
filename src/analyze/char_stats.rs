@@ -23,7 +23,7 @@ impl<const N: usize> CharCounts<N> {
                 *char_counts.occurrence_by_char.entry(ch).or_insert(0) += 1;
                 char_counts.total_chars += 1;
             }
-            for ch in util::uniq_chars(word) {
+            for ch in util::uniq_chars(word).iter() {
                 *char_counts.word_count_by_char.entry(ch).or_insert(0) += 1;
             }
             char_counts.words_count += 1;

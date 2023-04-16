@@ -95,7 +95,7 @@ impl<'a, 'b, const N: usize> ScoredChars<'a, 'b, N> {
         for word_freq in all_words {
             let word = &word_freq.word;
             let mut score = 0.0;
-            for ch in util::uniq_chars(word) {
+            for ch in util::uniq_chars(word).iter() {
                 score += all_char_scores.get(&ch).unwrap_or(&0.0)
             }
             if self.char_score_includes_frequency {
