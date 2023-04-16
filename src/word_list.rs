@@ -1,8 +1,10 @@
+use std::iter::FlatMap;
 use crate::guess::known_word_constraints::KnownWordConstraints;
 use crate::word_list::Iter::ForFiltered;
 use crate::word_list::WordList::{Empty, Filtered, Reified};
 use bitvec::prelude::*;
 use std::rc::Rc;
+use std::str::Chars;
 
 #[derive(Clone)]
 pub struct WordFreq {
@@ -110,6 +112,10 @@ impl<const N: usize> WordList<N> {
                 total_length: allowed.count_ones(),
             },
         }
+    }
+
+    pub fn all_chars(&self) -> FlatMap<Iter, Chars<'_>, fn(&WordFreq) -> Chars<'_>> {
+        self.words().flat_map(|w| w.word.chars())
     }
 
     pub fn len(&self) -> usize {

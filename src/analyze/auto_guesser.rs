@@ -4,8 +4,8 @@ use crate::guess::guesses::{GuessGrid, GuessStr};
 use crate::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};
 use crate::word_list::WordList;
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
 
+use crate::analyze::util;
 use std::ops::DerefMut;
 
 pub struct AutoGuesser<const N: usize, const R: usize> {
@@ -78,11 +78,10 @@ impl<const N: usize, const R: usize> AutoGuesser<N, R> {
     }
 
     fn enter_guess(guess: &str, output: &mut GuessStr<N>, answer: &str) {
-        let mut chars_count = HashMap::with_capacity(N);
+        let mut chars_count = util::chars_count(answer.chars());
         let mut answer_chars = ['\x00'; N];
         for (idx, mut answer_ch) in answer.chars().enumerate() {
             answer_ch = answer_ch.to_ascii_uppercase();
-            *chars_count.entry(answer_ch).or_insert(0).deref_mut() += 1;
             answer_chars[idx] = answer_ch;
         }
         // Do this in two passes: first to find all the chars that are in the right position,
