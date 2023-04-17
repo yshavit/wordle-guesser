@@ -29,7 +29,7 @@ impl<const N: usize> Analyzer<N> for CharPositionScorer<N> {
                         .or_insert_with(|| CharPosCounts::default());
                     if guess_char == &word_char {
                         counts.correct += 1;
-                    } else if word_chars.contains(&guess_char) {
+                    } else if word_chars.contains(*guess_char) {
                         counts.wrong_position += 1;
                     } else {
                         counts.missing += 1;

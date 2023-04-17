@@ -1,3 +1,4 @@
+use crate::analyze::pattern::PatternBasedAnalyzer;
 use crate::analyze::position_chars::CharPositionScorer;
 use crate::analyze::scored_chars::CharScorer;
 use crate::analyze::simple_analyzers::{AlphabeticalOrder, CharFrequencies, WordFrequencies};
@@ -12,6 +13,7 @@ pub trait Analyzer<const N: usize> {
 pub fn standard_suite<const N: usize>() -> Vec<Box<dyn Analyzer<N>>> {
     vec![
         Box::new(CharFrequencies {}),
+        Box::new(PatternBasedAnalyzer { limit: 10000 }),
         Box::new(AlphabeticalOrder { ascending: true }),
         Box::new(AlphabeticalOrder { ascending: false }),
         Box::new(CharScorer {
