@@ -1,8 +1,8 @@
-use std::cmp::max;
 use crate::analyze::analyzer::{Analyzer, ScoredWord};
 use crate::analyze::util;
 use crate::guess::known_word_constraints::CharKnowledge;
 use crate::word_list::{WordFreq, WordList};
+use std::cmp::max;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
@@ -20,16 +20,26 @@ impl<const N: usize> Analyzer<N> for PatternBasedAnalyzer<N> {
         let mut words_and_scores: Vec<(ScoredWord<'a>, u32)> = words_list
             .words()
             .take(self.limit)
-            .map(|w| (
-                ScoredWord{word: &w.word, score: Self::score_word(&w.word, words_list) as f64},
-                w.freq))
+            .map(|w| {
+                (
+                    ScoredWord {
+                        word: &w.word,
+                        score: Self::score_word(&w.word, words_list) as f64,
+                    },
+                    w.freq,
+                )
+            })
             .collect();
 
         let max_freq_and_score = words_and_scores.iter().fold((0, 0, 0.0), |acc, entry| {
             let (count, acc_freq, acc_score): (u32, u32, f64) = acc;
             let entry_freq = entry.1;
             let entry_score = entry.0.score;
-            (count + 1, max(acc_freq, entry_freq), acc_score.max(entry_score))
+            (
+                count + 1,
+                max(acc_freq, entry_freq),
+                acc_score.max(entry_score),
+            )
         });
         if max_freq_and_score.0 > 0 {
             let max_freq = max_freq_and_score.1 as f64;
