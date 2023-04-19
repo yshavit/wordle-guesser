@@ -38,9 +38,12 @@ def find_plural(m, word):
 
 
 
-for line in sys.stdin:
+for line_no, line in enumerate(sys.stdin):
     line = line.strip()
-    word, freq = line.split("\t")
+    splits = line.split("\t")
+    if len(splits) != 2:
+        raise Exception(f'invalid entry on line {line_no}: {line}')
+    word, freq = splits
     if not word.isalpha():
         continue
     word_len = len(word)
