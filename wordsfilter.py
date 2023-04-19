@@ -27,7 +27,7 @@ words_8char_with_ies = {}
 
 
 def add_to(m, k, v):
-    m[k] = m.get(k, 0) + int(v)
+    m[k] = m.get(k, 0) + float(v)
 
 
 def find_plural(m, word):
@@ -41,6 +41,8 @@ def find_plural(m, word):
 for line in sys.stdin:
     line = line.strip()
     word, freq = line.split("\t")
+    if not word.isalpha():
+        continue
     word_len = len(word)
     if word_len == 5:
         add_to(word_5char_freqs, word, freq)

@@ -2,7 +2,6 @@ use crate::analyze::analyzer::{Analyzer, ScoredWord};
 use crate::analyze::util;
 use crate::guess::known_word_constraints::CharKnowledge;
 use crate::word_list::{WordFreq, WordList};
-use std::cmp::max;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
@@ -17,7 +16,7 @@ impl<const N: usize> Analyzer<N> for PatternBasedAnalyzer<N> {
     }
 
     fn analyze<'a>(&self, words_list: &'a WordList<N>) -> Vec<ScoredWord<'a>> {
-        let mut words_and_scores: Vec<(ScoredWord<'a>, u32)> = words_list
+        let mut words_and_scores: Vec<(ScoredWord<'a>, f64)> = words_list
             .words()
             .take(self.limit)
             .map(|w| {
@@ -31,13 +30,13 @@ impl<const N: usize> Analyzer<N> for PatternBasedAnalyzer<N> {
             })
             .collect();
 
-        let max_freq_and_score = words_and_scores.iter().fold((0, 0, 0.0), |acc, entry| {
-            let (count, acc_freq, acc_score): (u32, u32, f64) = acc;
+        let max_freq_and_score = words_and_scores.iter().fold((0, 0.0, 0.0), |acc, entry| {
+            let (count, acc_freq, acc_score): (u32, f64, f64) = acc;
             let entry_freq = entry.1;
             let entry_score = entry.0.score;
             (
                 count + 1,
-                max(acc_freq, entry_freq),
+                acc_freq.max(entry_freq),
                 acc_score.max(entry_score),
             )
         });
