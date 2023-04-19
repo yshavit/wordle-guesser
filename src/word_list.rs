@@ -9,7 +9,7 @@ use std::str::Chars;
 #[derive(Clone)]
 pub struct WordFreq {
     pub word: String,
-    pub freq: u32,
+    pub freq: f64,
 }
 
 #[derive(Clone)]
@@ -34,7 +34,7 @@ impl<const N: usize> WordList<N> {
     }
 
     pub fn get_embedded(limit: usize) -> Self {
-        let file = include_str!("words-5chars.txt");
+        let file = include_str!("words-5chars-wiktionary-gutenberg.txt");
         let mut words = Vec::with_capacity(file.chars().filter(|c| c == &'\n').count());
         for line in file.split("\n") {
             let Some((word, freq_str)) = line.split_once("\t") else {
@@ -43,7 +43,7 @@ impl<const N: usize> WordList<N> {
             if word.len() != N {
                 continue;
             }
-            let Ok(freq) = freq_str.parse::<u32>() else {
+            let Ok(freq) = freq_str.parse::<f64>() else {
                 continue;
             };
             words.push(WordFreq {
