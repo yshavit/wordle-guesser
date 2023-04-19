@@ -2,6 +2,8 @@ use crate::analyze::analyzer::{Analyzer, ScoredWord};
 use crate::analyze::util;
 use crate::analyze::util::uniq_chars;
 use crate::word_list::{WordFreq, WordList};
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 pub struct AlphabeticalOrder {
     pub ascending: bool,
@@ -74,6 +76,27 @@ impl<const N: usize> Analyzer<N> for WordFrequencies {
             .map(|WordFreq { word, freq }| ScoredWord {
                 word,
                 score: *freq as f64,
+            })
+            .collect()
+    }
+}
+
+pub struct Random {}
+
+impl<const N: usize> Analyzer<N> for Random {
+    fn name(&self) -> String {
+        "Random".to_string()
+    }
+
+    fn analyze<'a>(&self, words_list: &'a WordList<N>) -> Vec<ScoredWord<'a>> {
+        let mut result: Vec<&'a String> = words_list.words().map(|wf| &wf.word).collect();
+        result.shuffle(&mut thread_rng());
+        result
+            .into_iter()
+            .enumerate()
+            .map(|(score, word)| ScoredWord {
+                word,
+                score: score as f64,
             })
             .collect()
     }

@@ -11,6 +11,7 @@ debug = 1 # for profiling: https://nnethercote.github.io/perf-book/profiling.htm
 [dependencies]
 bitvec = "1.0.1"
 pancurses = "0.17"
+rand = "0.8.5"
 strum = { version = "0.24", features = ["derive"] }
 
 [dev-dependencies]
