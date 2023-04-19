@@ -1,6 +1,7 @@
 use std::env;
 use wordlehelper::analyze::analyzer;
-use wordlehelper::analyze::auto_guesser::{AutoGuesser, GuessResult};
+use wordlehelper::analyze::auto_guesser::AutoGuesser;
+use wordlehelper::guess::known_word_constraints::CharKnowledge;
 use wordlehelper::ui::tui::MainWindow;
 use wordlehelper::word_list::WordList;
 
@@ -18,12 +19,24 @@ fn main() {
         for result in auto_guesser.guess_all() {
             println!("{}:", result.answer);
             for analyzer_result in result.analyzer_results {
-                print!("    {}: ", analyzer_result.name);
-                match analyzer_result.result {
-                    GuessResult::Success(tries) => {
-                        println!("Succeeded in {}: {}", tries.len(), tries.join(" "))
+                println!(
+                    "    {}: {} in {}",
+                    analyzer_result.name,
+                    analyzer_result.result,
+                    analyzer_result.guesses.len()
+                );
+                for row in analyzer_result.guesses {
+                    print!("      ");
+                    for guess_ch in row.chars() {
+                        let display = match guess_ch.knowledge() {
+                            CharKnowledge::Unknown => "⤵️",
+                            CharKnowledge::WrongPosition => "🟨",
+                            CharKnowledge::Correct => "🟩",
+                            CharKnowledge::Missing => "⬛️",
+                        };
+                        print!("{}", display)
                     }
-                    GuessResult::Failure => println!("FAILED"),
+                    println!()
                 }
             }
         }

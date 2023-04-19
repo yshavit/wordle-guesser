@@ -1,3 +1,4 @@
+use std::array::IntoIter;
 use std::slice::Iter;
 
 use crate::guess::known_word_constraints::CharKnowledge;
@@ -126,6 +127,15 @@ impl<const N: usize, const R: usize> GuessGrid<N, R> {
         }
 
         result
+    }
+}
+
+impl<const N: usize, const R: usize> IntoIterator for GuessGrid<N, R> {
+    type Item = GuessStr<N>;
+    type IntoIter = IntoIter<GuessStr<N>, R>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.guesses.into_iter()
     }
 }
 

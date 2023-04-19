@@ -3,6 +3,7 @@ use crate::analyze::auto_guesser::GuessResult::{Failure, Success};
 use crate::guess::guesses::{GuessGrid, GuessStr};
 use crate::guess::known_word_constraints::{CharKnowledge, KnownWordConstraints};
 use crate::word_list::WordList;
+use strum::Display;
 
 use crate::analyze::util;
 
@@ -12,23 +13,25 @@ pub struct AutoGuesser<const N: usize, const R: usize> {
     pub analyzers: Vec<Box<dyn Analyzer<N>>>,
 }
 
+#[derive(Display)]
 pub enum GuessResult {
-    Success(Vec<String>),
+    Success,
     Failure,
 }
 
-pub struct AnalyzerGuessResult {
+pub struct AnalyzerGuessResult<const N: usize> {
     pub name: String,
     pub result: GuessResult,
+    pub guesses: Vec<GuessStr<N>>,
 }
 
-pub struct ResultsByWord {
+pub struct ResultsByWord<const N: usize> {
     pub answer: String,
-    pub analyzer_results: Vec<AnalyzerGuessResult>,
+    pub analyzer_results: Vec<AnalyzerGuessResult<N>>,
 }
 
 impl<const N: usize, const R: usize> AutoGuesser<N, R> {
-    pub fn guess_all(self) -> Vec<ResultsByWord> {
+    pub fn guess_all(self) -> Vec<ResultsByWord<N>> {
         let mut all_results = Vec::with_capacity(self.answer_words.len());
         for answer in self.answer_words {
             if answer.len() != N {
@@ -36,10 +39,12 @@ impl<const N: usize, const R: usize> AutoGuesser<N, R> {
             }
             let mut results_by_analyzer = Vec::with_capacity(self.analyzers.len());
             for analyzer in &self.analyzers {
-                let result = Self::guess_one(&self.words_list, &answer, analyzer.as_ref());
+                let (result, guesses) =
+                    Self::guess_one(&self.words_list, &answer, analyzer.as_ref());
                 results_by_analyzer.push(AnalyzerGuessResult {
                     name: analyzer.name().to_string(), // TODO can borrow, with some lifetime trickery
                     result,
+                    guesses,
                 });
             }
             all_results.push(ResultsByWord {
@@ -54,9 +59,8 @@ impl<const N: usize, const R: usize> AutoGuesser<N, R> {
         words_list: &WordList<N>,
         answer: &str,
         analyzer: &dyn Analyzer<N>,
-    ) -> GuessResult {
+    ) -> (GuessResult, Vec<GuessStr<N>>) {
         let mut grid = GuessGrid::<N, R>::new();
-        let mut guesses = Vec::with_capacity(R);
         let mut possible_words = words_list.filter_preview(&KnownWordConstraints::empty());
         let answer_upper = answer.to_ascii_uppercase();
         for guess_num in 0..R {
@@ -64,15 +68,14 @@ impl<const N: usize, const R: usize> AutoGuesser<N, R> {
             let mut scores: Vec<ScoredWord> = analyzer.analyze(&possible_words);
             scores.sort();
             let Some(&ScoredWord{word: best_guess, ..}) = scores.first() else {
-                return Failure;
+                return (Failure, grid.into_iter().take(guess_num).collect());
             };
-            guesses.push(best_guess.to_string());
-            if best_guess == answer_upper {
-                return Success(guesses.into_iter().map(|s| s.to_string()).collect());
-            }
             Self::enter_guess(best_guess, grid.guess_mut(guess_num), &answer_upper);
+            if best_guess == answer_upper {
+                return (Success, grid.into_iter().take(guess_num + 1).collect());
+            }
         }
-        Failure
+        (Failure, grid.into_iter().collect())
     }
 
     fn enter_guess(guess: &str, output: &mut GuessStr<N>, answer: &str) {
