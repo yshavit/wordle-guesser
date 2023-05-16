@@ -11,13 +11,16 @@ fn main() {
         let mut main_window: MainWindow<5, 6> = MainWindow::init();
         main_window.run_main_loop();
     } else {
+        let count = try_words.len();
         let auto_guesser: AutoGuesser<5, 6> = AutoGuesser {
             answer_words: try_words,
             words_list: WordList::get_embedded_std(),
             analyzers: analyzer::standard_suite(),
         };
         for result in auto_guesser.guess_all() {
-            println!("{}:", result.answer);
+            if count > 0 {
+                println!("{}:", result.answer);
+            }
             for analyzer_result in result.analyzer_results {
                 println!(
                     "    {}: {} in {}",

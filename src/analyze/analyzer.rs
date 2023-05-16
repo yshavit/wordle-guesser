@@ -2,7 +2,7 @@ use crate::analyze::pattern::PatternBasedAnalyzer;
 use crate::analyze::position_chars::CharPositionScorer;
 use crate::analyze::scored_chars::CharScorer;
 use crate::analyze::simple_analyzers::{
-    AlphabeticalOrder, CharFrequencies, Random, WordFrequencies,
+    CharFrequencies, Random, WordFrequencies,
 };
 use crate::word_list::WordList;
 use std::cmp::Ordering;
@@ -15,18 +15,18 @@ pub trait Analyzer<const N: usize> {
 pub fn standard_suite<const N: usize>() -> Vec<Box<dyn Analyzer<N>>> {
     vec![
         Box::new(CharFrequencies {}),
-        Box::new(AlphabeticalOrder { ascending: true }),
-        Box::new(AlphabeticalOrder { ascending: false }),
+        // Box::new(AlphabeticalOrder { ascending: true }),
+        // Box::new(AlphabeticalOrder { ascending: false }),
         Box::new(CharScorer {
             double_count_freq: false,
         }),
         Box::new(CharScorer {
             double_count_freq: true,
         }),
-        Box::new(Random {}),
         Box::new(WordFrequencies {}),
         Box::new(CharPositionScorer {}),
         Box::new(PatternBasedAnalyzer { limit: 10000 }),
+        Box::new(Random {}),
     ]
 }
 
