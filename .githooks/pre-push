@@ -6,5 +6,6 @@ source .githooks/lib/common.sh || {
 }
 
 quoted cargo fmt --check
+quoted cargo test
 
 
