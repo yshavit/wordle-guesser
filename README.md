@@ -1,3 +1,14 @@
+# Wordle Helper
+
+Interactive CLI tool for solving Wordle puzzles.
+
+## Developing
+
+Please run the following when you initially check the repo out (if you plan on pushing code):
+
+    git config core.hooksPath .githooks
+
+Building is just the usual `cargo build`, `cargo run`, etc. Nothing fancy here.
 
 ## Libraries (other than what's in Cargo.toml)
 

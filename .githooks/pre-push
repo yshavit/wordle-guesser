@@ -1,0 +1,10 @@
+#!/bin/bash
+
+source .githooks/lib/common.sh || {
+  echo >&2 'Please run with the repo root as the working dir.'
+  exit 1
+}
+
+quoted cargo fmt --check
+
+

@@ -1,9 +1,7 @@
 use crate::analyze::pattern::PatternBasedAnalyzer;
 use crate::analyze::position_chars::CharPositionScorer;
 use crate::analyze::scored_chars::CharScorer;
-use crate::analyze::simple_analyzers::{
-    CharFrequencies, Random, WordFrequencies,
-};
+use crate::analyze::simple_analyzers::{CharFrequencies, Random, WordFrequencies};
 use crate::word_list::WordList;
 use std::cmp::Ordering;
 
