@@ -1,11 +1,16 @@
 #!/bin/bash
 
-source .githooks/lib/common.sh || {
-  echo >&2 'Please run with the repo root as the working dir.'
+if ! command -v multichecks >/dev/null; then
+  echo "Please install multichecks:"
+  echo ""
+  echo "cargo install --git https://github.com/yshavit/multichecks"
   exit 1
-}
+fi
 
-quoted cargo fmt --check
-quoted cargo test
+multichecks << EOF
+  cargo fmt --check
+  cargo test
+  cargo check
+EOF
 
 
