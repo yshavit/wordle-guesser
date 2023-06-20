@@ -72,6 +72,14 @@ impl WordsFile {
             WordsFile::HermitDave => include_str!("words-5chars-hermitdave.txt"),
         }
     }
+
+    fn multiplier(&self) -> f64 {
+        match self {
+            WordsFile::WGutenberg => 5.0,
+            WordsFile::Norvig => 0.0,
+            WordsFile::HermitDave => 1.0,
+        }
+    }
 }
 
 impl<const N: usize> WordList<N> {
@@ -80,23 +88,25 @@ impl<const N: usize> WordList<N> {
     }
 
     pub fn std() -> Self {
-        let limit = 10_000;
-        let all_words_files = WordsFile::iter().map(|wl| wl.get_embedded(limit));
-        Self::combine(all_words_files, limit)
+        let limit = 5_000;
+        Self::combine(
+            WordsFile::iter().map(|wl| (wl.get_embedded(limit * 2), wl.multiplier())),
+            limit)
     }
 
     pub fn combine<I>(items: I, limit: usize) -> Self
     where
-        I: Iterator<Item = Self>,
+        I: Iterator<Item = (Self, f64)>,
     {
         // There may be a more clever way to do this, in a streaming fashion. But for now, I'm
         // just going to do the brute-force approach.
         // let itemsRef = &items;
         let mut acc: HashMap<String, f64> = HashMap::new();
-        for word_list in items {
+        for (word_list, factor) in items {
+            let total_freqs: f64 = word_list.words().map(|wf| wf.freq).sum();
             for word_freq in word_list.words() {
                 let entry = acc.entry(word_freq.word.clone());
-                *entry.or_insert(0.0) += word_freq.freq;
+                *entry.or_insert(0.0) += word_freq.freq / total_freqs * factor;
             }
         }
         // We could be more efficient with this: rather than coming up with the full list, and
