@@ -1,8 +1,8 @@
-use std::cmp::Ordering;
 use crate::guess::known_word_constraints::KnownWordConstraints;
 use crate::word_list::Iter::ForFiltered;
 use crate::word_list::WordList::{Empty, Filtered, Reified};
 use bitvec::prelude::*;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::iter::FlatMap;
 use std::rc::Rc;
@@ -92,7 +92,8 @@ impl<const N: usize> WordList<N> {
     pub fn std() -> Self {
         Self::combine(
             WordsFile::iter().map(|wl| (wl.get_embedded(STD_WORD_LIST_SIZE * 2), wl.multiplier())),
-            STD_WORD_LIST_SIZE)
+            STD_WORD_LIST_SIZE,
+        )
     }
 
     pub fn combine<I>(items: I, limit: usize) -> Self
@@ -112,14 +113,13 @@ impl<const N: usize> WordList<N> {
         }
         // We could be more efficient with this: rather than coming up with the full list, and
         // then trimming it, we could inert-and-trim as we go. Not important for now, though.
-        let mut acc_vec: Vec<WordFreq> = acc.into_iter()
+        let mut acc_vec: Vec<WordFreq> = acc
+            .into_iter()
             .map(|(word, freq)| WordFreq { word, freq })
             .collect();
-        acc_vec.sort_by(|first, second|{
-            match second.freq.total_cmp(&first.freq) {
-                Ordering::Equal => first.word.cmp(&second.word),
-                ne => ne,
-            }
+        acc_vec.sort_by(|first, second| match second.freq.total_cmp(&first.freq) {
+            Ordering::Equal => first.word.cmp(&second.word),
+            ne => ne,
         });
         acc_vec.truncate(limit);
         // We could compact now, but probably not worth the CPU. It'll get compacted next time
