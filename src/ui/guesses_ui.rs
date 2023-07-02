@@ -32,7 +32,7 @@ impl<const N: usize, const R: usize> GuessesUI<N, R> {
             active_row: 0,
             active_col: 0,
             has_new_knowledge: Cell::new(true),
-            possible_words: WordList::get_embedded_std(),
+            possible_words: WordList::std(),
             current_row_inference: [None; N],
         };
         res.draw_guess_grid();

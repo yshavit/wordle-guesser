@@ -2,9 +2,16 @@ use crate::guess::known_word_constraints::KnownWordConstraints;
 use crate::word_list::Iter::ForFiltered;
 use crate::word_list::WordList::{Empty, Filtered, Reified};
 use bitvec::prelude::*;
+use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::iter::FlatMap;
 use std::rc::Rc;
 use std::str::Chars;
+use std::usize;
+use strum::EnumIter;
+use strum::IntoEnumIterator;
+
+const STD_WORD_LIST_SIZE: usize = 4_200;
 
 #[derive(Clone)]
 pub struct WordFreq {
@@ -24,17 +31,16 @@ pub enum WordList<const N: usize> {
     },
 }
 
-impl<const N: usize> WordList<N> {
-    pub fn empty() -> Self {
-        Empty
-    }
+#[derive(EnumIter)]
+pub enum WordsFile {
+    WGutenberg,
+    Norvig,
+    HermitDave,
+}
 
-    pub fn get_embedded_std() -> Self {
-        Self::get_embedded(20_000)
-    }
-
-    pub fn get_embedded(limit: usize) -> Self {
-        let file = include_str!("words-5chars-wiktionary-gutenberg.txt");
+impl WordsFile {
+    pub fn get_embedded<const N: usize>(&self, limit: usize) -> WordList<N> {
+        let file = self.get_file_contents();
         let mut words = Vec::with_capacity(file.chars().filter(|c| c == &'\n').count());
         for line in file.split("\n") {
             let Some((word, freq_str)) = line.split_once("\t") else {
@@ -57,6 +63,71 @@ impl<const N: usize> WordList<N> {
         return Reified {
             words: Rc::new(words),
         };
+    }
+}
+
+impl WordsFile {
+    fn get_file_contents(&self) -> &'static str {
+        match self {
+            WordsFile::WGutenberg => include_str!("words-5chars-wiktionary-gutenberg.txt"),
+            WordsFile::Norvig => include_str!("words-5chars-norvig.txt"),
+            WordsFile::HermitDave => include_str!("words-5chars-hermitdave.txt"),
+        }
+    }
+
+    fn multiplier(&self) -> f64 {
+        match self {
+            WordsFile::WGutenberg => 5.0,
+            WordsFile::Norvig => 0.0,
+            WordsFile::HermitDave => 1.0,
+        }
+    }
+}
+
+impl<const N: usize> WordList<N> {
+    pub fn empty() -> Self {
+        Empty
+    }
+
+    pub fn std() -> Self {
+        Self::combine(
+            WordsFile::iter().map(|wl| (wl.get_embedded(STD_WORD_LIST_SIZE * 2), wl.multiplier())),
+            STD_WORD_LIST_SIZE,
+        )
+    }
+
+    pub fn combine<I>(items: I, limit: usize) -> Self
+    where
+        I: Iterator<Item = (Self, f64)>,
+    {
+        // There may be a more clever way to do this, in a streaming fashion. But for now, I'm
+        // just going to do the brute-force approach.
+        // let itemsRef = &items;
+        let mut acc: HashMap<String, f64> = HashMap::new();
+        for (word_list, factor) in items {
+            let total_freqs: f64 = word_list.words().map(|wf| wf.freq).sum();
+            for word_freq in word_list.words() {
+                let entry = acc.entry(word_freq.word.clone());
+                *entry.or_insert(0.0) += word_freq.freq / total_freqs * factor;
+            }
+        }
+        // We could be more efficient with this: rather than coming up with the full list, and
+        // then trimming it, we could inert-and-trim as we go. Not important for now, though.
+        let mut acc_vec: Vec<WordFreq> = acc
+            .into_iter()
+            .map(|(word, freq)| WordFreq { word, freq })
+            .collect();
+        acc_vec.sort_by(|first, second| match second.freq.total_cmp(&first.freq) {
+            Ordering::Equal => first.word.cmp(&second.word),
+            ne => ne,
+        });
+        acc_vec.truncate(limit);
+        // We could compact now, but probably not worth the CPU. It'll get compacted next time
+        // it's filtered, anyway.
+
+        Reified {
+            words: Rc::new(acc_vec),
+        }
     }
 
     pub fn filter(&mut self, knowledge: &KnownWordConstraints<N>) {

@@ -12,7 +12,7 @@ Building is just the usual `cargo build`, `cargo run`, etc. Nothing fancy here.
 
 ## Libraries (other than what's in Cargo.toml)
 
-- `words-5chars.txt` comes from https://norvig.com/ngrams/ ([direct link][1])
+- `words-5chars-norvig.txt` comes from https://norvig.com/ngrams/ ([direct link][1])
 - `words-5chars-wiktionary-gutenberg.txt` comes from [Wiktionary's frequency list from Project Gutenberg][2]
 - `words-5chars-hermitdave.txt` comes from github.com/hermitdave/FrequencyWords's `en_full.txt` ([direct link][3])  
 

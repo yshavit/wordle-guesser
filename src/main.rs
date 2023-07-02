@@ -14,7 +14,7 @@ fn main() {
         let count = try_words.len();
         let auto_guesser: AutoGuesser<5, 6> = AutoGuesser {
             answer_words: try_words,
-            words_list: WordList::get_embedded_std(),
+            words_list: WordList::std(),
             analyzers: analyzer::standard_suite(),
         };
         for result in auto_guesser.guess_all() {
