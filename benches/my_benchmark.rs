@@ -6,7 +6,7 @@ use wordlehelper::word_list::WordList;
 
 fn bench_analyzers(c: &mut Criterion) {
     let mut group = c.benchmark_group("analyzers");
-    let words_5c: WordList<5> = WordList::get_embedded_std();
+    let words_5c: WordList<5> = WordList::std();
     for analyzer in analyzer::standard_suite() {
         group.bench_with_input(
             BenchmarkId::new("filter", analyzer.name()),
@@ -21,7 +21,7 @@ fn bench_filter(c: &mut Criterion) {
 
     for size in [10, 100, 1_000, 2_000, 2_500, 5_000] {
         group.throughput(Throughput::Elements(size));
-        let words_5c: WordList<5> = WordList::get_embedded_std();
+        let words_5c: WordList<5> = WordList::std();
         let mut grid = GuessGrid::<5, 1>::new();
         let row_knowledge = [
             ('a', CharKnowledge::WrongPosition),

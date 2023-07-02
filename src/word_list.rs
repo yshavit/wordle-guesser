@@ -11,6 +11,8 @@ use std::usize;
 use strum::EnumIter;
 use strum::IntoEnumIterator;
 
+const STD_WORD_LIST_SIZE: usize = 4_500;
+
 #[derive(Clone)]
 pub struct WordFreq {
     pub word: String,
@@ -88,10 +90,9 @@ impl<const N: usize> WordList<N> {
     }
 
     pub fn std() -> Self {
-        let limit = 5_000;
         Self::combine(
-            WordsFile::iter().map(|wl| (wl.get_embedded(limit * 2), wl.multiplier())),
-            limit)
+            WordsFile::iter().map(|wl| (wl.get_embedded(STD_WORD_LIST_SIZE * 2), wl.multiplier())),
+            STD_WORD_LIST_SIZE)
     }
 
     pub fn combine<I>(items: I, limit: usize) -> Self
