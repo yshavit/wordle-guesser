@@ -200,13 +200,15 @@ impl<const N: usize> WordList<N> {
     pub fn reify(&self) -> Self {
         match self {
             Empty => Empty,
-            Reified {words } => Reified {words: Rc::clone(words)},
-            f@ Filtered { .. } => {
+            Reified { words } => Reified {
+                words: Rc::clone(words),
+            },
+            f @ Filtered { .. } => {
                 let words: Vec<WordFreq> = f.words().map(|wf| wf.clone()).collect();
                 Reified {
                     words: Rc::new(words),
                 }
-            },
+            }
         }
     }
 }

@@ -1,11 +1,11 @@
 use crate::analyze::analyzer::{Analyzer, ScoredWord};
+use crate::analyze::util::CharsCount;
 use crate::guess::known_word_constraints::CharKnowledge;
 use crate::word_list::{WordFreq, WordList};
 use bitvec::vec::BitVec;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use strum::EnumCount;
-use crate::analyze::util::CharsCount;
 
 const MAX_WORD_LEN_FOR_BITVEC: usize = 5;
 
@@ -187,7 +187,7 @@ impl<const N: usize> PatternSet<N> for BitBasedPatternSet<N> {
     }
 
     fn size(&self) -> usize {
-         self.count
+        self.count
     }
 }
 
