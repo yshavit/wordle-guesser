@@ -72,7 +72,6 @@ impl<const N: usize> PatternBasedAnalyzer<N> {
         }
     }
 
-    #[inline(never)]
     fn score_word_0<P: PatternSet<N>>(word: &str, all_words: &WordList<N>) -> usize {
         let mut patterns = P::new();
         let mut answer_arr = ['\x00'; N];
@@ -91,7 +90,6 @@ impl<const N: usize> PatternBasedAnalyzer<N> {
         patterns.size()
     }
 
-    #[inline(never)]
     fn pattern(guess: &str, answer: &[char; N], answer_chars_count: &mut CharsCount) -> Pattern<N> {
         let mut result = Pattern {
             knowledge: [CharKnowledge::Missing; N],
@@ -175,7 +173,6 @@ impl<const N: usize> PatternSet<N> for BitBasedPatternSet<N> {
         }
     }
 
-    #[inline(never)]
     fn add(&mut self, pattern: &Pattern<N>) {
         let pattern_as_usize = Self::pattern_to_usize(&pattern);
         if !self.patterns.replace(pattern_as_usize, true) {
@@ -189,7 +186,7 @@ impl<const N: usize> PatternSet<N> for BitBasedPatternSet<N> {
 }
 
 impl<const N: usize> BitBasedPatternSet<N> {
-    #[inline(never)]
+    #[inline]
     fn pattern_to_usize(pattern: &Pattern<N>) -> usize {
         let mut result = 0;
         let mut position_factor = 1;

@@ -25,6 +25,7 @@ pub struct CharsCount {
 }
 
 impl CharsCount {
+    #[inline]
     pub fn get(&self, ch: char) -> u32 {
         if !ch.is_ascii_alphabetic() {
             return 0;
@@ -33,6 +34,7 @@ impl CharsCount {
         return self.counts[ch as usize - A_USIZE];
     }
 
+    #[inline]
     pub fn get_mut(&mut self, ch: char) -> Option<&mut u32> {
         if !ch.is_ascii_alphabetic() {
             return None;
@@ -41,18 +43,21 @@ impl CharsCount {
         return Some(&mut self.counts[ch as usize - A_USIZE]);
     }
 
+    #[inline]
     pub fn increment(&mut self, ch: char) {
         if let Some(count) = self.get_mut(ch) {
             *count += 1;
         }
     }
 
+    #[inline]
     pub fn decrement(&mut self, ch: char) {
         if let Some(count) = self.get_mut(ch) {
             *count -= 1;
         }
     }
 
+    #[inline]
     pub fn reset_all(&mut self) {
         self.counts.fill(0);
     }
