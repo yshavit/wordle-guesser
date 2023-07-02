@@ -23,7 +23,7 @@ pub fn standard_suite<const N: usize>() -> Vec<Box<dyn Analyzer<N>>> {
         }),
         Box::new(WordFrequencies {}),
         Box::new(CharPositionScorer {}),
-        Box::new(PatternBasedAnalyzer { limit: 10000 }),
+        Box::new(PatternBasedAnalyzer { limit: 3500 }),
         Box::new(Random {}),
     ]
 }
