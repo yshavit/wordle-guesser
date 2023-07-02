@@ -11,7 +11,7 @@ use std::usize;
 use strum::EnumIter;
 use strum::IntoEnumIterator;
 
-const STD_WORD_LIST_SIZE: usize = 4_500;
+const STD_WORD_LIST_SIZE: usize = 4_200;
 
 #[derive(Clone)]
 pub struct WordFreq {
