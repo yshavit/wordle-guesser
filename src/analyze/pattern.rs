@@ -73,9 +73,15 @@ impl<const N: usize> PatternBasedAnalyzer<N> {
     }
 
     fn score_word_0<P: PatternSet<N>>(word: &str, all_words: &WordList<N>) -> usize {
+        // These three are basically "scratch space" that all of the words will use for this guess.
+        // Benchmarking and experimentation suggests that this is the best place to create them:
+        // if we create them within the loop, it's too costly, but if we create them outside the
+        // overall score-all-words loop (in analyze(~), above), it gets slower again for some
+        // reason I don't fully understand.
         let mut patterns = P::new();
         let mut answer_arr = ['\x00'; N];
         let mut answer_chars_count = CharsCount::default();
+
         for WordFreq {
             word: if_answer, ..
         } in all_words.words()
