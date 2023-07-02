@@ -19,7 +19,7 @@ const A_USIZE: usize = 'A' as usize;
 const Z_USIZE: usize = 'Z' as usize;
 const NUM_CHARS: usize = Z_USIZE - A_USIZE + 1;
 
-#[derive(Default)]
+#[derive(Default, Copy, Clone)]
 pub struct CharsCount {
     counts: [u32; NUM_CHARS],
 }
@@ -51,6 +51,10 @@ impl CharsCount {
         if let Some(count) = self.get_mut(ch) {
             *count -= 1;
         }
+    }
+
+    pub fn reset_all(&mut self) {
+        self.counts.fill(0);
     }
 }
 

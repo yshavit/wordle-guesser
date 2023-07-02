@@ -11,7 +11,7 @@ use std::usize;
 use strum::EnumIter;
 use strum::IntoEnumIterator;
 
-const STD_WORD_LIST_SIZE: usize = 4_200;
+const STD_WORD_LIST_SIZE: usize = 7_500;
 
 #[derive(Clone)]
 pub struct WordFreq {
@@ -194,6 +194,19 @@ impl<const N: usize> WordList<N> {
             Empty => 0,
             Reified { words } => words.as_ref().len(),
             Filtered { allowed, .. } => allowed.count_ones(),
+        }
+    }
+
+    pub fn reify(&self) -> Self {
+        match self {
+            Empty => Empty,
+            Reified {words } => Reified {words: Rc::clone(words)},
+            f@ Filtered { .. } => {
+                let words: Vec<WordFreq> = f.words().map(|wf| wf.clone()).collect();
+                Reified {
+                    words: Rc::new(words),
+                }
+            },
         }
     }
 }
